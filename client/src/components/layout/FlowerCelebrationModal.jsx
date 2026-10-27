@@ -19,7 +19,10 @@ export const FlowerCelebrationModal = ({ isOpen, onClose, minutes = 25, taskTitl
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 bg-[#342D2B]/30 backdrop-blur-sm flex items-center justify-center p-4">
+    <div
+      className="fixed inset-0 bg-black/70 backdrop-blur-md flex items-center justify-center p-4"
+      style={{ zIndex: 99999 }}
+    >
       <div className="bg-white rounded-3xl p-6 md:p-8 max-w-sm w-full text-center shadow-2xl border border-peach-200 animate-in zoom-in-95 duration-200">
         {/* Animated Blooming Flower Graphic */}
         <div className="w-24 h-24 mx-auto mb-4 relative flex items-center justify-center">

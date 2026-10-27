@@ -330,9 +330,12 @@ export const FocusMoodOverlay = () => {
     setTimeout(() => setBlockedNotification(null), 4500);
   };
 
-  const handleExitSession = async () => {
-    await handleCompleteSession(false);
+  const handleExitSession = () => {
+    setShowExitConfirm(false);
     stopFullFocusMode();
+    handleCompleteSession(false).catch((err) => {
+      console.warn('Session save notice:', err);
+    });
   };
 
   // Switch topic
@@ -582,16 +585,19 @@ export const FocusMoodOverlay = () => {
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-[#14100E] text-white flex flex-col justify-between p-4 sm:p-6 select-none overflow-hidden animate-in fade-in duration-300">
+    <div
+      className="fixed inset-0 bg-[#14100E] text-white flex flex-col justify-between p-3 sm:p-5 select-none overflow-y-auto animate-in fade-in duration-300"
+      style={{ zIndex: 9000 }}
+    >
       {/* Background Breathing Glow Radial (only when in Zen Timer view) */}
       {viewMode === 'timer' && (
         <div className="absolute inset-0 pointer-events-none flex items-center justify-center opacity-30">
-          <div className="w-[500px] h-[500px] rounded-full bg-gradient-to-r from-coral/40 via-sidebarOrange/20 to-transparent blur-3xl animate-pulse" />
+          <div className="w-[450px] h-[450px] rounded-full bg-gradient-to-r from-coral/40 via-sidebarOrange/20 to-transparent blur-3xl animate-pulse" />
         </div>
       )}
 
-      {/* TOP HEADER BAR: Always visible across all views */}
-      <div className="relative z-20 flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-white/10 shrink-0">
+      {/* TOP HEADER BAR: Always sticky and visible across all views */}
+      <div className="relative z-30 flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-white/10 shrink-0">
         {/* Left: Lock indicator & Topic Switcher */}
         <div className="flex items-center gap-3">
           <div className="w-9 h-9 rounded-2xl bg-coral/20 border border-coral text-coral flex items-center justify-center shadow-lg shrink-0">
@@ -750,39 +756,48 @@ export const FocusMoodOverlay = () => {
       {/* VIEW 1: ZEN TIMER (GIANT AMBIENT CLOCK)                   */}
       {/* ======================================================== */}
       {viewMode === 'timer' && (
-        <div className="relative z-10 flex-1 flex flex-col items-center justify-center my-auto text-center animate-in fade-in duration-200">
+        <div className="relative z-10 flex-1 flex flex-col items-center justify-center my-auto py-2 text-center animate-in fade-in duration-200">
           {/* Progress indicator */}
-          <div className="mb-4 flex items-center gap-2 text-xs font-bold text-coral bg-coral/10 px-4 py-1.5 rounded-full border border-coral/20">
+          <div className="mb-2 sm:mb-4 flex items-center gap-2 text-xs font-bold text-coral bg-coral/10 px-4 py-1.5 rounded-full border border-coral/20">
             <span>{progressPercent}% Complete</span>
             <span>•</span>
             <span>{mins} mins remaining</span>
           </div>
 
-          {/* Huge Countdown Digits */}
-          <div className="text-7xl sm:text-9xl md:text-[11rem] lg:text-[13rem] font-black font-display tracking-tight text-white select-none leading-none drop-shadow-2xl">
+          {/* Countdown Digits */}
+          <div className="text-6xl sm:text-7xl md:text-8xl lg:text-9xl font-black font-display tracking-tight text-white select-none leading-none drop-shadow-2xl my-2 sm:my-4">
             {timeFormatted}
           </div>
 
-          {/* Controls: Big Play/Pause & Complete */}
-          <div className="mt-8 flex items-center gap-4">
+          {/* Controls: Big Play/Pause, Mark Complete & End Session */}
+          <div className="mt-4 sm:mt-6 flex items-center gap-3 sm:gap-4 flex-wrap justify-center">
             <button
               onClick={() => setIsActive(!isActive)}
-              className="w-16 h-16 rounded-full bg-coral hover:bg-coral-dark text-white flex items-center justify-center shadow-glow-coral transition-all hover:scale-105 active:scale-95"
+              className="w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-coral hover:bg-coral-dark text-white flex items-center justify-center shadow-glow-coral transition-all hover:scale-105 active:scale-95"
               title={isActive ? 'Pause Timer' : 'Resume Timer'}
             >
               {isActive ? (
-                <Pause className="w-7 h-7 fill-white" />
+                <Pause className="w-6 h-6 fill-white" />
               ) : (
-                <Play className="w-7 h-7 fill-white ml-1" />
+                <Play className="w-6 h-6 fill-white ml-0.5" />
               )}
             </button>
 
             <button
               onClick={() => handleCompleteSession(true)}
-              className="px-5 py-3 rounded-full bg-white/10 hover:bg-white/20 text-white font-bold text-xs border border-white/15 transition-all flex items-center gap-2"
+              className="px-4 py-2.5 sm:px-5 sm:py-3 rounded-full bg-white/10 hover:bg-white/20 text-white font-bold text-xs border border-white/15 transition-all flex items-center gap-2"
             >
               <CheckCircle2 className="w-4 h-4 text-successGreen" />
               <span>Mark Complete</span>
+            </button>
+
+            <button
+              onClick={() => setShowExitConfirm(true)}
+              className="px-4 py-2.5 sm:px-5 sm:py-3 rounded-full bg-white/5 hover:bg-red-500/20 text-white/80 hover:text-red-300 font-bold text-xs border border-white/10 transition-all flex items-center gap-1.5"
+              title="End Session"
+            >
+              <Unlock className="w-3.5 h-3.5" />
+              <span>End Session</span>
             </button>
           </div>
 
@@ -1415,22 +1430,40 @@ export const FocusMoodOverlay = () => {
 
       {/* Exit Confirmation Dialog */}
       {showExitConfirm && (
-        <div className="fixed inset-0 z-60 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-[#1F1A18] rounded-3xl p-6 max-w-sm w-full text-center border-2 border-peach-200/20 shadow-2xl animate-in zoom-in-95 duration-150">
-            <h4 className="text-base font-bold text-white mb-2">End Focus Session Early?</h4>
-            <p className="text-xs text-white/60 mb-6">
-              You still have {mins} minutes remaining in your study block. Exiting early will stop your continuous focus streak.
+        <div
+          className="fixed inset-0 bg-black/85 backdrop-blur-md flex items-center justify-center p-4"
+          style={{ zIndex: 99999 }}
+        >
+          <div className="bg-[#1C1614] rounded-3xl p-6 sm:p-8 max-w-sm w-full text-center border-2 border-coral/30 shadow-2xl animate-in zoom-in-95 duration-150 relative">
+            <button
+              type="button"
+              onClick={() => setShowExitConfirm(false)}
+              className="absolute top-4 right-4 text-white/50 hover:text-white p-1 rounded-xl hover:bg-white/10 transition-colors"
+              title="Close"
+            >
+              <X className="w-4 h-4" />
+            </button>
+
+            <div className="w-12 h-12 rounded-2xl bg-coral/20 border border-coral text-coral flex items-center justify-center mx-auto mb-3 shadow-sm">
+              <Clock className="w-6 h-6 text-coral" />
+            </div>
+
+            <h4 className="text-lg font-bold text-white mb-2">End Focus Session Early?</h4>
+            <p className="text-xs text-white/70 mb-6 leading-relaxed">
+              You still have <strong className="text-coral">{mins} minutes</strong> remaining in your study block. Exiting early will stop your continuous focus streak.
             </p>
             <div className="flex items-center gap-3">
               <button
+                type="button"
                 onClick={() => setShowExitConfirm(false)}
-                className="flex-1 py-2.5 rounded-xl bg-coral hover:bg-coral-dark text-white font-bold text-xs"
+                className="flex-1 py-3 rounded-2xl bg-white/10 hover:bg-white/20 text-white font-bold text-xs border border-white/15 transition-all"
               >
                 Keep Focusing
               </button>
               <button
+                type="button"
                 onClick={handleExitSession}
-                className="flex-1 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-white font-bold text-xs border border-white/15"
+                className="flex-1 py-3 rounded-2xl bg-coral hover:bg-coral-dark text-white font-bold text-xs shadow-soft-peach transition-all"
               >
                 End & Unlock
               </button>
