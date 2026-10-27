@@ -1215,16 +1215,21 @@ export const FocusMoodOverlay = () => {
                       key={qIdx}
                       className="p-4 rounded-2xl bg-[#14100E] border border-white/10 space-y-3"
                     >
-                      <div className="flex items-start justify-between gap-2">
-                        <span className="text-xs font-bold text-white/90">
-                          {qIdx + 1}. {q.question}
-                        </span>
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="flex items-start gap-2.5">
+                          <span className="w-6 h-6 rounded-lg bg-coral/20 text-coral text-xs font-extrabold flex items-center justify-center shrink-0 mt-0.5">
+                            {qIdx + 1}
+                          </span>
+                          <h4 className="text-sm font-semibold text-white/95 leading-relaxed">
+                            {q.questionText || q.question}
+                          </h4>
+                        </div>
                         {graded && (
-                          <span>
+                          <span className="shrink-0">
                             {graded.isCorrect ? (
-                              <CheckCircle2 className="w-4 h-4 text-successGreen shrink-0" />
+                              <CheckCircle2 className="w-5 h-5 text-successGreen" />
                             ) : (
-                              <XCircle className="w-4 h-4 text-red-400 shrink-0" />
+                              <XCircle className="w-5 h-5 text-red-400" />
                             )}
                           </span>
                         )}
@@ -1234,10 +1239,11 @@ export const FocusMoodOverlay = () => {
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                         {q.options?.map((opt, optIdx) => {
                           const isSelected = selectedAnswers[qIdx] === optIdx;
+                          const correctIdx = graded?.correctOption !== undefined ? graded.correctOption : graded?.correctAnswer;
                           let optStyle = 'bg-white/5 border-white/10 hover:border-coral/50 text-white/80';
 
                           if (quizResult && graded) {
-                            if (optIdx === graded.correctAnswer) {
+                            if (optIdx === correctIdx) {
                               optStyle = 'bg-successGreen/20 border-successGreen text-white font-bold';
                             } else if (isSelected && !graded.isCorrect) {
                               optStyle = 'bg-red-500/20 border-red-500 text-red-200';
