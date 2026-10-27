@@ -13,9 +13,13 @@ import {
   CheckCircle2,
   Clock,
   BookOpen,
+  Coffee,
+  Bell,
+  ArrowRight,
 } from 'lucide-react';
 import { FlowerCelebrationModal } from '../components/layout/FlowerCelebrationModal';
 import { useAuth } from '../context/AuthContext';
+import { playChimeBell } from '../utils/audioChime';
 import api from '../services/api';
 
 export const FocusRoomPage = () => {
@@ -30,6 +34,7 @@ export const FocusRoomPage = () => {
   const [selectedTaskId, setSelectedTaskId] = useState(preselected.taskId || '');
   const [selectedTopicId, setSelectedTopicId] = useState(preselected.topicId || '');
   const [mode, setMode] = useState('focus'); // 'focus', 'short_break', 'long_break'
+  const [showBreakOverModal, setShowBreakOverModal] = useState(false);
 
   const [targetMinutes, setTargetMinutes] = useState(25);
   const [secondsRemaining, setSecondsRemaining] = useState(25 * 60);
@@ -116,6 +121,14 @@ export const FocusRoomPage = () => {
   };
 
   const handleStart = () => {
+    // If Short Break or Long Break: run standard on-page relaxing timer (NO focus lockdown)
+    if (mode === 'short_break' || mode === 'long_break') {
+      setIsActive(true);
+      if (!sessionStartTime) setSessionStartTime(new Date());
+      return;
+    }
+
+    // mode === 'focus' -> Launch Full Screen Focus Mode
     const taskObj = tasks.find((t) => t._id === selectedTaskId);
     const subObj = subjects.find((s) => s._id === selectedSubjectId);
     const topicObj = topics.find((t) => t._id === selectedTopicId);
@@ -158,15 +171,21 @@ export const FocusRoomPage = () => {
         subjectId: selectedSubjectId || null,
         sessionType: mode,
         targetMinutes,
-        notes: taskObj ? `Focused on ${taskObj.title}` : 'General focus session',
+        notes: taskObj ? `Focused on ${taskObj.title}` : `${mode === 'focus' ? 'Focus Block' : 'Break Block'}`,
       });
 
-      if (completed && mode === 'focus') {
-        setCelebration({
-          isOpen: true,
-          minutes: targetMinutes,
-          taskTitle: taskObj?.title || 'Academic Session',
-        });
+      if (completed) {
+        if (mode === 'focus') {
+          setCelebration({
+            isOpen: true,
+            minutes: targetMinutes,
+            taskTitle: taskObj?.title || 'Academic Session',
+          });
+        } else {
+          // Play melodious Tibet chime bell to ring break is over!
+          playChimeBell();
+          setShowBreakOverModal(true);
+        }
       }
 
       fetchData();
@@ -318,6 +337,13 @@ export const FocusRoomPage = () => {
 
       {/* Main Focus Centerpiece */}
       <div className="bg-white/95 rounded-4xl p-8 md:p-12 shadow-soft-card border border-[#FFE2D3]/70 flex flex-col items-center justify-center text-center relative overflow-hidden">
+        {mode !== 'focus' && (
+          <div className="flex items-center gap-2 bg-successGreen/15 border border-successGreen/30 text-successGreen-dark px-4 py-2 rounded-full text-xs font-bold mb-4 animate-in fade-in">
+            <Coffee className="w-4 h-4 text-successGreen-dark" />
+            <span>☕ Relaxing Break — Timer running smoothly on screen. (No full screen lockdown)</span>
+          </div>
+        )}
+
         {/* Active Task / Subject Selection */}
         <div className="flex items-center gap-3 flex-wrap justify-center mb-6">
           <select
@@ -497,6 +523,55 @@ export const FocusRoomPage = () => {
         taskTitle={celebration.taskTitle}
         onClose={() => setCelebration({ isOpen: false, minutes: 25, taskTitle: '' })}
       />
+
+      {/* Break Time Over Modal with Bell Ring Notification */}
+      {showBreakOverModal && (
+        <div className="fixed inset-0 z-50 bg-[#342D2B]/50 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-200">
+          <div className="bg-white rounded-3xl p-6 md:p-8 max-w-sm w-full text-center shadow-2xl border border-peach-200 animate-in zoom-in-95 duration-200">
+            <div className="w-16 h-16 rounded-full bg-amber-100 text-amber-600 flex items-center justify-center mx-auto mb-4 shadow-sm animate-bounce text-2xl">
+              🔔
+            </div>
+            <h3 className="text-xl font-bold font-display text-mainText">
+              Break Time is Over!
+            </h3>
+            <p className="text-xs md:text-sm text-mainText-muted mt-2 mb-6">
+              Your break has concluded. Ready to jump back into your academic focus block?
+            </p>
+            <div className="flex flex-col gap-2">
+              <button
+                onClick={() => {
+                  setShowBreakOverModal(false);
+                  switchMode('focus', 25);
+                  const taskObj = tasks.find((t) => t._id === selectedTaskId);
+                  const subObj = subjects.find((s) => s._id === selectedSubjectId);
+                  const topicObj = topics.find((t) => t._id === selectedTopicId);
+                  startFullFocusMode({
+                    targetMinutes: 25,
+                    taskTitle: taskObj?.title || (topicObj ? topicObj.name : ''),
+                    subjectName: subObj?.name || 'General Study',
+                    subjectId: selectedSubjectId || null,
+                    taskId: selectedTaskId || null,
+                    topicId: selectedTopicId || null,
+                    topicName: topicObj?.name || '',
+                    notes: topicObj?.notes || '',
+                    resources: topicObj?.resources || [],
+                  });
+                }}
+                className="w-full py-3 rounded-2xl bg-coral hover:bg-coral-dark text-white font-bold text-xs md:text-sm shadow-soft-peach transition-all hover:scale-105 active:scale-95 flex items-center justify-center gap-2"
+              >
+                <span>Back to Study (25m Focus Block)</span>
+                <ArrowRight className="w-4 h-4" />
+              </button>
+              <button
+                onClick={() => setShowBreakOverModal(false)}
+                className="w-full py-2.5 rounded-2xl text-xs font-semibold text-mainText-muted hover:bg-peach-50"
+              >
+                Dismiss
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

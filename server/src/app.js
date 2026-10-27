@@ -7,6 +7,8 @@ const connectDB = require('./config/db');
 const apiRouter = require('./routes/apiRouter');
 const errorHandler = require('./middleware/errorHandler');
 
+const path = require('path');
+
 const app = express();
 const PORT = process.env.PORT || 5001;
 
@@ -33,9 +35,12 @@ app.use(
   })
 );
 
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 app.use(cookieParser());
+
+// Statically serve uploaded PDFs and diagrams
+app.use('/uploads', express.static(path.join(__dirname, '../public/uploads')));
 
 if (process.env.NODE_ENV !== 'production') {
   app.use(morgan('dev'));

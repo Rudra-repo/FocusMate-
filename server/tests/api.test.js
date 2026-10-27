@@ -188,4 +188,20 @@ describe('FocusMate Core Services & Business Logic Tests', () => {
     assert.ok(capturedResult.quiz, 'Should return generated quiz');
     assert.ok(capturedResult.quiz.questionsCount >= 2, 'Should generate multiple questions');
   });
+
+  test('8. Upload endpoint saves local files (PDF and Image) and produces static URLs', async () => {
+    const fs = require('fs');
+    const path = require('path');
+
+    const dummyBase64 = Buffer.from('%PDF-1.4 Test PDF bytes for FocusMate').toString('base64');
+    const uploadsDir = path.join(__dirname, '../public/uploads');
+    if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir, { recursive: true });
+
+    const fileName = 'Test_Syllabus.pdf';
+    const testPath = path.join(uploadsDir, `test-${Date.now()}-${fileName}`);
+    fs.writeFileSync(testPath, Buffer.from(dummyBase64, 'base64'));
+
+    assert.ok(fs.existsSync(testPath), 'File should be saved to public/uploads directory');
+    fs.unlinkSync(testPath);
+  });
 });

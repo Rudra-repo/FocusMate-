@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   X,
   FileText,
@@ -16,10 +16,14 @@ import {
   BookOpen,
   Eye,
   AlertCircle,
-  HelpCircle
+  HelpCircle,
+  Upload,
+  Link2,
+  FileUp,
 } from 'lucide-react';
 import api from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
+import { InScreenStudyViewer } from './InScreenStudyViewer';
 
 export const TopicStudyMaterialsModal = ({
   isOpen,
@@ -38,12 +42,17 @@ export const TopicStudyMaterialsModal = ({
   const [notesSaveSuccess, setNotesSaveSuccess] = useState(false);
 
   // New resource form state
+  const [attachMode, setAttachMode] = useState('file'); // 'file' (upload local image/pdf) or 'link' (drive/web url)
   const [newResourceTitle, setNewResourceTitle] = useState('');
   const [newResourceUrl, setNewResourceUrl] = useState('');
   const [newResourceType, setNewResourceType] = useState('drive'); // 'drive', 'pdf', 'image', 'link'
+  const [selectedFile, setSelectedFile] = useState(null);
   const [isAddingResource, setIsAddingResource] = useState(false);
   const [resourceFilter, setResourceFilter] = useState('all');
-  const [previewImage, setPreviewImage] = useState(null);
+  const [uploadError, setUploadError] = useState('');
+  const [viewerResource, setViewerResource] = useState(null);
+
+  const fileInputRef = useRef(null);
 
   useEffect(() => {
     if (topic && isOpen) {
@@ -52,6 +61,9 @@ export const TopicStudyMaterialsModal = ({
       setNotesSaveSuccess(false);
       setNewResourceTitle('');
       setNewResourceUrl('');
+      setSelectedFile(null);
+      setUploadError('');
+      if (fileInputRef.current) fileInputRef.current.value = '';
     }
   }, [topic, isOpen]);
 
@@ -77,35 +89,119 @@ export const TopicStudyMaterialsModal = ({
     }
   };
 
-  // Add new study material (Drive link, PDF, photo, etc.)
-  const handleAddResource = async (e) => {
+  const handleFileSelected = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setSelectedFile(file);
+    setUploadError('');
+
+    // Prepopulate title
+    if (!newResourceTitle.trim()) {
+      const cleanTitle = file.name.replace(/\.[^/.]+$/, '').replace(/[_-]/g, ' ');
+      setNewResourceTitle(cleanTitle);
+    }
+
+    // Determine type
+    if (file.type.startsWith('image/')) {
+      setNewResourceType('image');
+    } else if (file.type === 'application/pdf' || file.name.endsWith('.pdf')) {
+      setNewResourceType('pdf');
+    }
+  };
+
+  // Add new study material via File Upload or URL
+  const handleAddOrUploadResource = async (e) => {
     e.preventDefault();
-    if (!newResourceTitle.trim() || !newResourceUrl.trim()) return;
+    setUploadError('');
 
-    const resourceItem = {
-      title: newResourceTitle.trim(),
-      url: newResourceUrl.trim(),
-      resourceType: newResourceType,
-    };
-
-    const updatedResources = [...resources, resourceItem];
-
-    try {
-      setIsAddingResource(true);
-      const res = await api.patch(`/topics/${topic._id}`, {
-        resources: updatedResources,
-      });
-
-      if (res.data.success && res.data.topic) {
-        setResources(res.data.topic.resources || updatedResources);
-        setNewResourceTitle('');
-        setNewResourceUrl('');
-        if (onTopicUpdated) onTopicUpdated(res.data.topic);
+    if (attachMode === 'file') {
+      if (!selectedFile) {
+        setUploadError('Please select an image or PDF file to upload.');
+        return;
       }
-    } catch (err) {
-      console.error('Failed to add study material:', err);
-    } finally {
-      setIsAddingResource(false);
+
+      try {
+        setIsAddingResource(true);
+
+        const reader = new FileReader();
+        reader.onload = async () => {
+          try {
+            const base64Data = reader.result;
+
+            const upRes = await api.post('/uploads', {
+              fileName: selectedFile.name,
+              fileData: base64Data,
+              fileType: selectedFile.type,
+            });
+
+            if (upRes.data.success) {
+              const resourceItem = {
+                title: newResourceTitle.trim() || selectedFile.name,
+                url: upRes.data.url,
+                resourceType: upRes.data.resourceType,
+              };
+
+              const updatedResources = [...resources, resourceItem];
+              const res = await api.patch(`/topics/${topic._id}`, {
+                resources: updatedResources,
+              });
+
+              if (res.data.success && res.data.topic) {
+                setResources(res.data.topic.resources || updatedResources);
+                setNewResourceTitle('');
+                setSelectedFile(null);
+                if (fileInputRef.current) fileInputRef.current.value = '';
+                if (onTopicUpdated) onTopicUpdated(res.data.topic);
+              }
+            }
+          } catch (err) {
+            console.error('Upload failed:', err);
+            setUploadError(err.response?.data?.message || 'File upload failed. Please try again.');
+          } finally {
+            setIsAddingResource(false);
+          }
+        };
+
+        reader.onerror = () => {
+          setUploadError('Failed to read file from your disk.');
+          setIsAddingResource(false);
+        };
+
+        reader.readAsDataURL(selectedFile);
+      } catch (err) {
+        console.error('File reading error:', err);
+        setIsAddingResource(false);
+      }
+    } else {
+      // URL Mode (Drive or Web link)
+      if (!newResourceTitle.trim() || !newResourceUrl.trim()) return;
+
+      const resourceItem = {
+        title: newResourceTitle.trim(),
+        url: newResourceUrl.trim(),
+        resourceType: newResourceType,
+      };
+
+      const updatedResources = [...resources, resourceItem];
+
+      try {
+        setIsAddingResource(true);
+        const res = await api.patch(`/topics/${topic._id}`, {
+          resources: updatedResources,
+        });
+
+        if (res.data.success && res.data.topic) {
+          setResources(res.data.topic.resources || updatedResources);
+          setNewResourceTitle('');
+          setNewResourceUrl('');
+          if (onTopicUpdated) onTopicUpdated(res.data.topic);
+        }
+      } catch (err) {
+        console.error('Failed to add study material:', err);
+      } finally {
+        setIsAddingResource(false);
+      }
     }
   };
 
@@ -304,71 +400,178 @@ export const TopicStudyMaterialsModal = ({
             {/* TAB 2: STUDY MATERIALS (DRIVE, PDF, PHOTOS, LINKS) */}
             {activeTab === 'materials' && (
               <div className="space-y-6">
-                {/* Add Material Form */}
+                {/* Add Material Form with Local File Upload or URL */}
                 <form
-                  onSubmit={handleAddResource}
-                  className="bg-peach-50/50 p-4 rounded-2xl border border-peach-200 space-y-3"
+                  onSubmit={handleAddOrUploadResource}
+                  className="bg-peach-50/50 p-4 rounded-2xl border border-peach-200 space-y-3.5"
                 >
-                  <span className="text-xs font-bold text-mainText block">
-                    Attach New Study Material
-                  </span>
+                  <div className="flex items-center justify-between flex-wrap gap-2">
+                    <span className="text-xs font-bold text-mainText block">
+                      Attach Study Material
+                    </span>
 
-                  <div className="grid grid-cols-1 sm:grid-cols-12 gap-3">
-                    <div className="sm:col-span-5">
-                      <label className="text-[11px] font-bold text-mainText-muted block mb-1">
-                        Title or Label *
-                      </label>
-                      <input
-                        type="text"
-                        required
-                        placeholder="e.g. Unit 3 Midterm Drive Folder"
-                        value={newResourceTitle}
-                        onChange={(e) => setNewResourceTitle(e.target.value)}
-                        className="w-full text-xs px-3 py-2 rounded-xl border border-peach-200 focus:outline-none focus:border-coral bg-white"
-                      />
-                    </div>
-
-                    <div className="sm:col-span-4">
-                      <label className="text-[11px] font-bold text-mainText-muted block mb-1">
-                        Resource Type
-                      </label>
-                      <select
-                        value={newResourceType}
-                        onChange={(e) => setNewResourceType(e.target.value)}
-                        className="w-full text-xs px-3 py-2 rounded-xl border border-peach-200 focus:outline-none focus:border-coral bg-white"
-                      >
-                        <option value="drive">📁 Google Drive</option>
-                        <option value="pdf">📄 PDF Document</option>
-                        <option value="image">🖼️ Photo / Diagram</option>
-                        <option value="link">🔗 Web Reference</option>
-                      </select>
-                    </div>
-
-                    <div className="sm:col-span-3 flex items-end">
+                    {/* Mode Toggle: File Upload vs Link */}
+                    <div className="flex items-center gap-1 bg-white p-1 rounded-xl border border-peach-200">
                       <button
-                        type="submit"
-                        disabled={isAddingResource || !newResourceTitle.trim() || !newResourceUrl.trim()}
-                        className="w-full py-2 rounded-xl bg-coral hover:bg-coral-dark text-white text-xs font-bold shadow-soft-peach flex items-center justify-center gap-1.5 transition-all hover:scale-105 active:scale-95 disabled:opacity-50"
+                        type="button"
+                        onClick={() => {
+                          setAttachMode('file');
+                          setUploadError('');
+                        }}
+                        className={`px-3 py-1 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 ${
+                          attachMode === 'file'
+                            ? 'bg-coral text-white shadow-2xs'
+                            : 'text-mainText-muted hover:text-mainText'
+                        }`}
                       >
-                        <Plus className="w-3.5 h-3.5 stroke-[3]" />
-                        <span>Add</span>
+                        <Upload className="w-3.5 h-3.5" />
+                        <span>Upload File (PDF / Image)</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setAttachMode('link');
+                          setUploadError('');
+                        }}
+                        className={`px-3 py-1 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 ${
+                          attachMode === 'link'
+                            ? 'bg-coral text-white shadow-2xs'
+                            : 'text-mainText-muted hover:text-mainText'
+                        }`}
+                      >
+                        <Link2 className="w-3.5 h-3.5" />
+                        <span>Google Drive / Web Link</span>
                       </button>
                     </div>
                   </div>
 
-                  <div>
-                    <label className="text-[11px] font-bold text-mainText-muted block mb-1">
-                      Resource URL / Google Drive Link / Image Link *
-                    </label>
-                    <input
-                      type="url"
-                      required
-                      placeholder="https://drive.google.com/... or https://example.com/notes.pdf"
-                      value={newResourceUrl}
-                      onChange={(e) => setNewResourceUrl(e.target.value)}
-                      className="w-full text-xs px-3 py-2 rounded-xl border border-peach-200 focus:outline-none focus:border-coral bg-white"
-                    />
-                  </div>
+                  {uploadError && (
+                    <div className="p-2.5 rounded-xl bg-red-50 border border-red-200 text-red-600 text-xs flex items-center gap-2">
+                      <AlertCircle className="w-4 h-4 shrink-0" />
+                      <span>{uploadError}</span>
+                    </div>
+                  )}
+
+                  {/* 1. LOCAL FILE UPLOAD MODE */}
+                  {attachMode === 'file' ? (
+                    <div className="space-y-3">
+                      <div className="grid grid-cols-1 sm:grid-cols-12 gap-3">
+                        <div className="sm:col-span-7">
+                          <label className="text-[11px] font-bold text-mainText-muted block mb-1">
+                            Choose Image or PDF from Device *
+                          </label>
+                          <input
+                            type="file"
+                            ref={fileInputRef}
+                            required
+                            accept="image/*,application/pdf,.pdf"
+                            onChange={handleFileSelected}
+                            className="w-full text-xs px-3 py-2 rounded-xl border border-peach-200 focus:outline-none focus:border-coral bg-white file:mr-3 file:py-1 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-bold file:bg-peach-100 file:text-coral hover:file:bg-peach-200 cursor-pointer"
+                          />
+                        </div>
+
+                        <div className="sm:col-span-5">
+                          <label className="text-[11px] font-bold text-mainText-muted block mb-1">
+                            Resource Label / Title *
+                          </label>
+                          <input
+                            type="text"
+                            required
+                            placeholder="e.g. Unit 3 Handwritten Notes"
+                            value={newResourceTitle}
+                            onChange={(e) => setNewResourceTitle(e.target.value)}
+                            className="w-full text-xs px-3 py-2 rounded-xl border border-peach-200 focus:outline-none focus:border-coral bg-white"
+                          />
+                        </div>
+                      </div>
+
+                      {selectedFile && (
+                        <div className="flex items-center justify-between p-2.5 rounded-xl bg-white border border-peach-200 text-xs">
+                          <div className="flex items-center gap-2 text-mainText font-medium truncate">
+                            {selectedFile.type.includes('pdf') ? (
+                              <FileText className="w-4 h-4 text-red-500 shrink-0" />
+                            ) : (
+                              <Image className="w-4 h-4 text-purple-500 shrink-0" />
+                            )}
+                            <span className="truncate">{selectedFile.name}</span>
+                            <span className="text-[10px] text-mainText-muted">
+                              ({(selectedFile.size / 1024).toFixed(1)} KB)
+                            </span>
+                          </div>
+
+                          <button
+                            type="submit"
+                            disabled={isAddingResource}
+                            className="px-4 py-1.5 rounded-xl bg-coral hover:bg-coral-dark text-white text-xs font-bold shadow-soft-peach flex items-center gap-1.5 transition-all disabled:opacity-50 shrink-0 ml-2"
+                          >
+                            <Upload className="w-3.5 h-3.5" />
+                            <span>{isAddingResource ? 'Uploading...' : 'Upload & Save'}</span>
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    /* 2. URL LINK MODE (GOOGLE DRIVE / WEB) */
+                    <div className="space-y-3">
+                      <div className="grid grid-cols-1 sm:grid-cols-12 gap-3">
+                        <div className="sm:col-span-5">
+                          <label className="text-[11px] font-bold text-mainText-muted block mb-1">
+                            Title or Label *
+                          </label>
+                          <input
+                            type="text"
+                            required
+                            placeholder="e.g. Unit 3 Midterm Drive Folder"
+                            value={newResourceTitle}
+                            onChange={(e) => setNewResourceTitle(e.target.value)}
+                            className="w-full text-xs px-3 py-2 rounded-xl border border-peach-200 focus:outline-none focus:border-coral bg-white"
+                          />
+                        </div>
+
+                        <div className="sm:col-span-4">
+                          <label className="text-[11px] font-bold text-mainText-muted block mb-1">
+                            Resource Type
+                          </label>
+                          <select
+                            value={newResourceType}
+                            onChange={(e) => setNewResourceType(e.target.value)}
+                            className="w-full text-xs px-3 py-2 rounded-xl border border-peach-200 focus:outline-none focus:border-coral bg-white"
+                          >
+                            <option value="drive">📁 Google Drive</option>
+                            <option value="pdf">📄 PDF Document</option>
+                            <option value="image">🖼️ Photo / Diagram</option>
+                            <option value="link">🔗 Web Reference</option>
+                          </select>
+                        </div>
+
+                        <div className="sm:col-span-3 flex items-end">
+                          <button
+                            type="submit"
+                            disabled={isAddingResource || !newResourceTitle.trim() || !newResourceUrl.trim()}
+                            className="w-full py-2 rounded-xl bg-coral hover:bg-coral-dark text-white text-xs font-bold shadow-soft-peach flex items-center justify-center gap-1.5 transition-all hover:scale-105 active:scale-95 disabled:opacity-50"
+                          >
+                            <Plus className="w-3.5 h-3.5 stroke-[3]" />
+                            <span>Attach Link</span>
+                          </button>
+                        </div>
+                      </div>
+
+                      <div>
+                        <label className="text-[11px] font-bold text-mainText-muted block mb-1">
+                          Resource URL / Google Drive Link *
+                        </label>
+                        <input
+                          type="url"
+                          required
+                          placeholder="https://drive.google.com/... or https://example.com/notes.pdf"
+                          value={newResourceUrl}
+                          onChange={(e) => setNewResourceUrl(e.target.value)}
+                          className="w-full text-xs px-3 py-2 rounded-xl border border-peach-200 focus:outline-none focus:border-coral bg-white"
+                        />
+                      </div>
+                    </div>
+                  )}
                 </form>
 
                 {/* Filter Pills */}
@@ -405,7 +608,7 @@ export const TopicStudyMaterialsModal = ({
                 <div className="space-y-2.5">
                   {filteredResources.length === 0 ? (
                     <div className="py-8 text-center text-xs text-mainText-muted bg-peach-50/30 rounded-2xl border border-peach-100">
-                      No study materials attached yet. Paste your Google Drive links, lecture PDFs, or diagram photos above!
+                      No study materials attached yet. Upload lecture PDFs, handwritten diagram photos, or Google Drive links!
                     </div>
                   ) : (
                     filteredResources.map((res, index) => {
@@ -425,38 +628,32 @@ export const TopicStudyMaterialsModal = ({
                               <h5 className="text-xs md:text-sm font-bold text-mainText truncate">
                                 {res.title}
                               </h5>
-                              <a
-                                href={res.url}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="text-[11px] text-coral hover:underline truncate block max-w-xs sm:max-w-md"
-                              >
+                              <span className="text-[11px] text-mainText-muted truncate block max-w-xs sm:max-w-md">
                                 {res.url}
-                              </a>
+                              </span>
                             </div>
                           </div>
 
                           <div className="flex items-center gap-2 shrink-0">
-                            {/* If image, offer preview button */}
-                            {res.resourceType === 'image' && (
-                              <button
-                                type="button"
-                                onClick={() => setPreviewImage(res.url)}
-                                className="p-1.5 rounded-xl bg-peach-50 text-coral hover:bg-coral hover:text-white transition-colors"
-                                title="View Diagram Photo"
-                              >
-                                <Eye className="w-4 h-4" />
-                              </button>
-                            )}
+                            {/* In-Screen Reader Button */}
+                            <button
+                              type="button"
+                              onClick={() => setViewerResource(res)}
+                              className="px-3 py-1.5 rounded-xl bg-coral/10 hover:bg-coral text-coral hover:text-white text-xs font-bold transition-all flex items-center gap-1.5"
+                              title="Read directly on screen without leaving FocusMate"
+                            >
+                              <Eye className="w-3.5 h-3.5" />
+                              <span>View on Screen</span>
+                            </button>
 
                             <a
                               href={res.url}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="px-3 py-1.5 rounded-xl bg-peach-50 hover:bg-coral hover:text-white text-coral text-xs font-bold transition-all flex items-center gap-1"
+                              className="p-1.5 rounded-xl bg-peach-50 text-mainText-muted hover:text-coral transition-colors"
+                              title="Open in new tab"
                             >
-                              <span>Open</span>
-                              <ExternalLink className="w-3 h-3" />
+                              <ExternalLink className="w-4 h-4" />
                             </a>
 
                             <button
@@ -479,36 +676,12 @@ export const TopicStudyMaterialsModal = ({
         </div>
       </div>
 
-      {/* Diagram Photo Lightbox Modal */}
-      {previewImage && (
-        <div
-          className="fixed inset-0 z-60 bg-black/80 backdrop-blur-md flex items-center justify-center p-4"
-          onClick={() => setPreviewImage(null)}
-        >
-          <div
-            className="bg-white rounded-3xl p-4 max-w-2xl max-h-[85vh] overflow-hidden shadow-2xl relative flex flex-col items-center"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="w-full flex items-center justify-between pb-2 border-b border-peach-100 mb-2">
-              <span className="text-xs font-bold text-mainText">Study Diagram Preview</span>
-              <button
-                onClick={() => setPreviewImage(null)}
-                className="w-7 h-7 rounded-full bg-peach-50 text-mainText hover:text-coral flex items-center justify-center"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-            <img
-              src={previewImage}
-              alt="Study material"
-              className="max-h-[70vh] object-contain rounded-xl"
-              onError={(e) => {
-                e.target.src = 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=800';
-              }}
-            />
-          </div>
-        </div>
-      )}
+      {/* In-Screen Study Viewer Modal (PDF, Diagram Photos, Google Drive Embed) */}
+      <InScreenStudyViewer
+        isOpen={!!viewerResource}
+        onClose={() => setViewerResource(null)}
+        resource={viewerResource}
+      />
     </>
   );
 };
