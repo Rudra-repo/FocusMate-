@@ -2,10 +2,14 @@ import React, { useState, useEffect } from 'react';
 import { Plus, Search, Filter, Calendar, Clock, AlertCircle, CheckCircle, Trash2, Edit2, X } from 'lucide-react';
 import api from '../services/api';
 
+// In-memory module cache for instant tab switching
+let cachedTasks = null;
+let cachedTaskSubjects = null;
+
 export const TasksPage = () => {
-  const [tasks, setTasks] = useState([]);
-  const [subjects, setSubjects] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [tasks, setTasks] = useState(cachedTasks || []);
+  const [subjects, setSubjects] = useState(cachedTaskSubjects || []);
+  const [loading, setLoading] = useState(!cachedTasks);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [priorityFilter, setPriorityFilter] = useState('all');
@@ -25,6 +29,7 @@ export const TasksPage = () => {
   });
 
   const fetchData = async () => {
+    if (!cachedTasks) setLoading(true);
     try {
       const [tasksRes, subjectsRes] = await Promise.all([
         api.get('/tasks', {
@@ -38,8 +43,14 @@ export const TasksPage = () => {
         api.get('/subjects'),
       ]);
 
-      if (tasksRes.data.success) setTasks(tasksRes.data.tasks);
-      if (subjectsRes.data.success) setSubjects(subjectsRes.data.subjects);
+      if (tasksRes.data.success) {
+        cachedTasks = tasksRes.data.tasks;
+        setTasks(tasksRes.data.tasks);
+      }
+      if (subjectsRes.data.success) {
+        cachedTaskSubjects = subjectsRes.data.subjects;
+        setSubjects(subjectsRes.data.subjects);
+      }
     } catch (err) {
       console.error('Failed to load tasks:', err);
     } finally {

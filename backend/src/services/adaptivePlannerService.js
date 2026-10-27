@@ -11,26 +11,24 @@ class AdaptivePlannerService {
   async getRecommendations(userId) {
     const now = new Date();
 
-    // 1. Fetch user's pending/in_progress tasks
-    const tasks = await Task.find({
-      userId,
-      status: { $in: ['pending', 'in_progress'] },
-    })
-      .populate('subjectId', 'name color code')
-      .populate('topicId', 'name masteryLevel difficulty quizAccuracy')
-      .sort({ dueAt: 1 })
-      .lean();
-
-    // 2. Fetch all topics for user
-    const topics = await Topic.find({ userId })
-      .populate('subjectId', 'name color code')
-      .lean();
-
-    // 3. Fetch recent quiz attempts (last 30 days) to evaluate weakness
-    const attempts = await QuizAttempt.find({ userId })
-      .sort({ attemptedAt: -1 })
-      .limit(50)
-      .lean();
+    // Fetch tasks, topics, and quiz attempts in parallel
+    const [tasks, topics, attempts] = await Promise.all([
+      Task.find({
+        userId,
+        status: { $in: ['pending', 'in_progress'] },
+      })
+        .populate('subjectId', 'name color code')
+        .populate('topicId', 'name masteryLevel difficulty quizAccuracy')
+        .sort({ dueAt: 1 })
+        .lean(),
+      Topic.find({ userId })
+        .populate('subjectId', 'name color code')
+        .lean(),
+      QuizAttempt.find({ userId })
+        .sort({ attemptedAt: -1 })
+        .limit(50)
+        .lean(),
+    ]);
 
     // Create a topic-level accuracy lookup
     const topicAccuracyMap = {};

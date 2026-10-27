@@ -13,18 +13,25 @@ import { Sparkles, Brain, ArrowRight, Zap, Target } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
 
+// In-memory module cache: persists across route transitions
+let cachedDashboardData = null;
+
 export const DashboardPage = () => {
   const { startFullFocusMode } = useAuth();
-  const [dashboardData, setDashboardData] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [dashboardData, setDashboardData] = useState(cachedDashboardData);
+  const [loading, setLoading] = useState(!cachedDashboardData);
   const [celebration, setCelebration] = useState({ isOpen: false, minutes: 25, taskTitle: '' });
   const [isAiPlannerOpen, setIsAiPlannerOpen] = useState(false);
   const navigate = useNavigate();
 
-  const fetchDashboard = async () => {
+  const fetchDashboard = async (silent = false) => {
+    if (!silent && !cachedDashboardData) {
+      setLoading(true);
+    }
     try {
       const res = await api.get('/dashboard');
       if (res.data.success) {
+        cachedDashboardData = res.data.data;
         setDashboardData(res.data.data);
       }
     } catch (err) {
@@ -35,7 +42,8 @@ export const DashboardPage = () => {
   };
 
   useEffect(() => {
-    fetchDashboard();
+    // Revalidate in background if cached data exists, or fetch with loader if first load
+    fetchDashboard(Boolean(cachedDashboardData));
   }, []);
 
   const handleSessionComplete = (minutes, taskTitle) => {

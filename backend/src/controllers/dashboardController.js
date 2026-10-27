@@ -10,41 +10,34 @@ exports.getDashboardSummary = async (req, res, next) => {
     const userId = req.user.id;
     const now = new Date();
 
-    // 1. Fetch Analytics & Weekly Trend
-    const analytics = await analyticsService.getOverview(userId);
-
-    // 2. Fetch Today's Tasks
     const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0);
     const endOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999);
-
-    // Fetch tasks due today or pending
-    const todayTasks = await Task.find({
-      userId,
-      $or: [
-        { dueAt: { $gte: startOfToday, $lte: endOfToday } },
-        { status: { $in: ['pending', 'in_progress'] } }
-      ]
-    })
-      .populate('subjectId', 'name color code')
-      .sort({ dueAt: 1 })
-      .limit(10)
-      .lean();
-
-    // 3. User Subjects for quick Pomodoro selector
-    const subjects = await Subject.find({ userId }).select('name color code').lean();
-
-    // 4. Adaptive Recommendations (top 3)
-    const recommendations = await adaptivePlannerService.getRecommendations(userId);
-    const topRecommendation = recommendations[0] || null;
-
-    // 5. Calendar task dates for this month
     const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
     const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59);
 
-    const monthTasks = await Task.find({
-      userId,
-      dueAt: { $gte: startOfMonth, $lte: endOfMonth },
-    }).select('dueAt status priority taskType').lean();
+    // Parallelize all 5 dashboard data sources in a single concurrent batch
+    const [analytics, todayTasks, subjects, recommendations, monthTasks] = await Promise.all([
+      analyticsService.getOverview(userId),
+      Task.find({
+        userId,
+        $or: [
+          { dueAt: { $gte: startOfToday, $lte: endOfToday } },
+          { status: { $in: ['pending', 'in_progress'] } }
+        ]
+      })
+        .populate('subjectId', 'name color code')
+        .sort({ dueAt: 1 })
+        .limit(10)
+        .lean(),
+      Subject.find({ userId }).select('name color code').lean(),
+      adaptivePlannerService.getRecommendations(userId),
+      Task.find({
+        userId,
+        dueAt: { $gte: startOfMonth, $lte: endOfMonth },
+      }).select('dueAt status priority taskType').lean(),
+    ]);
+
+    const topRecommendation = recommendations[0] || null;
 
     const calendarDatesWithTasks = monthTasks.map(t => {
       const d = new Date(t.dueAt);

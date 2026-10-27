@@ -5,18 +5,23 @@ import { useAuth } from '../context/AuthContext';
 import { AiPlannerModal } from '../components/dashboard/AiPlannerModal';
 import api from '../services/api';
 
+// In-memory module cache for instant plan rendering
+let cachedRecommendations = null;
+
 export const PlanPage = () => {
   const { startFullFocusMode } = useAuth();
-  const [recommendations, setRecommendations] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [recommendations, setRecommendations] = useState(cachedRecommendations || []);
+  const [loading, setLoading] = useState(!cachedRecommendations);
   const [formulaInfoOpen, setFormulaInfoOpen] = useState(true);
   const [isAiModalOpen, setIsAiModalOpen] = useState(false);
   const navigate = useNavigate();
 
   const fetchRecommendations = async () => {
+    if (!cachedRecommendations) setLoading(true);
     try {
       const res = await api.get('/recommendations');
       if (res.data.success) {
+        cachedRecommendations = res.data.recommendations;
         setRecommendations(res.data.recommendations);
       }
     } catch (err) {

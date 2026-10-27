@@ -21,15 +21,30 @@ import { TopicStudyMaterialsModal } from '../components/subjects/TopicStudyMater
 import { TopicStudyPlannerModal } from '../components/subjects/TopicStudyPlannerModal';
 import { AiQuizModal } from '../components/quizzes/AiQuizModal';
 
+// In-memory module cache for subjects and topics
+let cachedSubjects = null;
+let cachedTopicsMap = {}; // { [subjectId]: topicsArray }
+let cachedSelectedSubject = null;
+
 export const SubjectsPage = () => {
   const { startFullFocusMode } = useAuth();
   const location = useLocation();
   const navState = location.state || {};
 
-  const [subjects, setSubjects] = useState([]);
-  const [selectedSubject, setSelectedSubject] = useState(null);
-  const [topics, setTopics] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [subjects, setSubjects] = useState(cachedSubjects || []);
+  const [selectedSubject, setSelectedSubject] = useState(() => {
+    if (navState.selectedSubjectId && cachedSubjects) {
+      return cachedSubjects.find((s) => s._id === navState.selectedSubjectId) || cachedSubjects[0];
+    }
+    return cachedSelectedSubject || (cachedSubjects ? cachedSubjects[0] : null);
+  });
+  const [topics, setTopics] = useState(() => {
+    const activeSub = navState.selectedSubjectId && cachedSubjects
+      ? cachedSubjects.find((s) => s._id === navState.selectedSubjectId)
+      : (cachedSelectedSubject || (cachedSubjects ? cachedSubjects[0] : null));
+    return (activeSub && cachedTopicsMap[activeSub._id]) || [];
+  });
+  const [loading, setLoading] = useState(!cachedSubjects);
   const [isAddSubjectOpen, setIsAddSubjectOpen] = useState(false);
   const [isAddTopicOpen, setIsAddTopicOpen] = useState(false);
 
@@ -63,36 +78,20 @@ export const SubjectsPage = () => {
     notes: '',
   });
 
-  const fetchSubjects = async () => {
-    try {
-      const res = await api.get('/subjects');
-      if (res.data.success) {
-        setSubjects(res.data.subjects);
-        if (res.data.subjects.length > 0) {
-          const targetSub = navState.selectedSubjectId
-            ? res.data.subjects.find((s) => s._id === navState.selectedSubjectId)
-            : null;
-          const initialSub = targetSub || res.data.subjects[0];
-          handleSelectSubject(initialSub);
-        }
-      }
-    } catch (err) {
-      console.error('Failed to load subjects:', err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchSubjects();
-  }, []);
-
-  const handleSelectSubject = async (sub) => {
+  const handleSelectSubject = async (sub, silent = false) => {
     setSelectedSubject(sub);
+    cachedSelectedSubject = sub;
+
+    // Instant render if topics exist in cache
+    if (cachedTopicsMap[sub._id]) {
+      setTopics(cachedTopicsMap[sub._id]);
+    }
+
     try {
       const res = await api.get(`/subjects/${sub._id}`);
       if (res.data.success) {
         const loadedTopics = res.data.topics || [];
+        cachedTopicsMap[sub._id] = loadedTopics;
         setTopics(loadedTopics);
 
         // If navigated with openTopicModal or targetTopicName, auto open planner modal
@@ -111,6 +110,32 @@ export const SubjectsPage = () => {
       console.error('Failed to load topics for subject:', err);
     }
   };
+
+  const fetchSubjects = async () => {
+    if (!cachedSubjects) setLoading(true);
+    try {
+      const res = await api.get('/subjects');
+      if (res.data.success) {
+        cachedSubjects = res.data.subjects;
+        setSubjects(res.data.subjects);
+        if (res.data.subjects.length > 0) {
+          const targetSub = navState.selectedSubjectId
+            ? res.data.subjects.find((s) => s._id === navState.selectedSubjectId)
+            : null;
+          const initialSub = targetSub || cachedSelectedSubject || res.data.subjects[0];
+          handleSelectSubject(initialSub, true);
+        }
+      }
+    } catch (err) {
+      console.error('Failed to load subjects:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchSubjects();
+  }, []);
 
   const handleCreateSubject = async (e) => {
     e.preventDefault();

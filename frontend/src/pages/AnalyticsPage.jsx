@@ -23,16 +23,21 @@ import {
 import api from '../services/api';
 import { useNavigate } from 'react-router-dom';
 
+// In-memory module cache for analytics
+let cachedAnalyticsData = null;
+
 export const AnalyticsPage = () => {
-  const [data, setData] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [data, setData] = useState(cachedAnalyticsData);
+  const [loading, setLoading] = useState(!cachedAnalyticsData);
   const navigate = useNavigate();
 
   useEffect(() => {
     const fetchAnalytics = async () => {
+      if (!cachedAnalyticsData) setLoading(true);
       try {
         const res = await api.get('/analytics/overview');
         if (res.data.success) {
+          cachedAnalyticsData = res.data.data;
           setData(res.data.data);
         }
       } catch (err) {

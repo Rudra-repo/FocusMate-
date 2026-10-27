@@ -7,22 +7,26 @@ const User = require('../models/User');
 
 class AnalyticsService {
   async getOverview(userId) {
-    const user = await User.findById(userId);
     const now = new Date();
 
+    // Fetch all analytics datasets concurrently in 1 parallel batch
+    const [user, allSessions, allTasks, subjects, attempts, topics] = await Promise.all([
+      User.findById(userId).lean(),
+      FocusSession.find({ userId, sessionType: 'focus' }).lean(),
+      Task.find({ userId }).lean(),
+      Subject.find({ userId }).lean(),
+      QuizAttempt.find({ userId }).populate('subjectId', 'name color').lean(),
+      Topic.find({ userId }).populate('subjectId', 'name color').lean(),
+    ]);
+
     // 1. Total study time & focus sessions
-    const completedSessions = await FocusSession.find({
-      userId,
-      sessionType: 'focus',
-      completed: true,
-    }).lean();
+    const completedSessions = allSessions.filter(s => s.completed);
 
     const totalSeconds = completedSessions.reduce((acc, s) => acc + (s.durationSeconds || 0), 0);
     const totalFocusHours = Math.round((totalSeconds / 3600) * 10) / 10;
     const totalSessionsCount = completedSessions.length;
 
     // Focus session completion rate
-    const allSessions = await FocusSession.find({ userId, sessionType: 'focus' }).lean();
     const completionRate = allSessions.length > 0 
       ? Math.round((completedSessions.length / allSessions.length) * 100) 
       : 100;
@@ -60,7 +64,6 @@ class AnalyticsService {
     const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0);
     const todayEnd = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999);
 
-    const allTasks = await Task.find({ userId }).lean();
     const todayTasks = allTasks.filter(t => {
       const dTime = new Date(t.dueAt).getTime();
       return dTime >= todayStart.getTime() && dTime <= todayEnd.getTime();
@@ -73,9 +76,6 @@ class AnalyticsService {
     const totalTasksCompleted = allTasks.filter(t => t.status === 'completed').length;
 
     // 4. Quiz Accuracy by Subject
-    const subjects = await Subject.find({ userId }).lean();
-    const attempts = await QuizAttempt.find({ userId }).populate('subjectId', 'name color').lean();
-
     const subjectAccuracy = subjects.map(sub => {
       const subAttempts = attempts.filter(a => a.subjectId?._id?.toString() === sub._id.toString());
       const totalScore = subAttempts.reduce((acc, a) => acc + (a.percentage || 0), 0);
@@ -90,7 +90,6 @@ class AnalyticsService {
     });
 
     // 5. Weak Topics Analysis
-    const topics = await Topic.find({ userId }).populate('subjectId', 'name color').lean();
     const topicAttemptsMap = {};
     attempts.forEach(att => {
       if (att.topicId) {

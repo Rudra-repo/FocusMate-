@@ -3,26 +3,37 @@ import { HelpCircle, Clock, CheckCircle2, XCircle, ArrowRight, RotateCcw, Award,
 import api from '../services/api';
 import { AiQuizModal } from '../components/quizzes/AiQuizModal';
 
+// In-memory module cache for instant quizzes rendering
+let cachedQuizzes = null;
+let cachedAttempts = null;
+
 export const QuizzesPage = () => {
-  const [quizzes, setQuizzes] = useState([]);
-  const [attempts, setAttempts] = useState([]);
+  const [quizzes, setQuizzes] = useState(cachedQuizzes || []);
+  const [attempts, setAttempts] = useState(cachedAttempts || []);
   const [activeQuiz, setActiveQuiz] = useState(null);
   const [selectedAnswers, setSelectedAnswers] = useState({});
   const [quizResult, setQuizResult] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(!cachedQuizzes);
   const [activeTab, setActiveTab] = useState('bank'); // 'bank' or 'attempts'
   const [timeSpent, setTimeSpent] = useState(0);
   const [isAiModalOpen, setIsAiModalOpen] = useState(false);
 
   const fetchQuizzes = async () => {
+    if (!cachedQuizzes) setLoading(true);
     try {
       const [qRes, aRes] = await Promise.all([
         api.get('/quizzes'),
         api.get('/quizzes/attempts'),
       ]);
-      if (qRes.data.success) setQuizzes(qRes.data.quizzes);
-      if (aRes.data.success) setAttempts(aRes.data.attempts);
+      if (qRes.data.success) {
+        cachedQuizzes = qRes.data.quizzes;
+        setQuizzes(qRes.data.quizzes);
+      }
+      if (aRes.data.success) {
+        cachedAttempts = aRes.data.attempts;
+        setAttempts(aRes.data.attempts);
+      }
     } catch (err) {
       console.error('Failed to load quizzes:', err);
     } finally {
