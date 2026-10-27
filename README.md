@@ -130,14 +130,14 @@ Run from the root directory:
 ```bash
 # Install root, backend, and frontend packages
 npm install
-npm --prefix server install
-npm --prefix client install
+npm --prefix backend install
+npm --prefix frontend install
 ```
 
 ### 2. Configure Environment Variables
-Copy `.env.example` to `server/.env`:
+Copy `.env.example` to `backend/.env`:
 ```bash
-cp server/.env.example server/.env
+cp backend/.env.example backend/.env
 ```
 Default configuration:
 ```env
@@ -152,7 +152,7 @@ NODE_ENV=development
 ### 3. Seed Realistic Demo Student Data
 Run the database seeder to populate **Taly's** account matching the mockup:
 ```bash
-npm --prefix server run seed
+npm --prefix backend run seed
 ```
 Demo Credentials:
 - **Email**: `taly@mail.com`
@@ -164,8 +164,8 @@ Start both frontend and backend concurrently:
 npm run dev
 ```
 Or start individually:
-- **Server**: `npm run server` (runs on `http://localhost:5001`)
-- **Client**: `npm run client` (runs on `http://localhost:5173`)
+- **Backend Server**: `npm run server` (runs on `http://localhost:5001`)
+- **Frontend Client**: `npm run client` (runs on `http://localhost:5173`)
 
 Open [http://localhost:5173](http://localhost:5173) in your browser.
 
@@ -175,7 +175,7 @@ Open [http://localhost:5173](http://localhost:5173) in your browser.
 
 Run the backend verification suite:
 ```bash
-node --test server/tests/api.test.js
+node --test backend/tests/api.test.js
 ```
 Verified test cases:
 1. Server-side elapsed duration calculation from `startedAt` and `endedAt`.
@@ -190,11 +190,11 @@ Verified test cases:
 
 ```
 focusmate/
-├── client/                      # React + Vite Frontend
+├── frontend/                    # React + Vite Frontend
 │   ├── public/
 │   ├── src/
 │   │   ├── components/
-│   │   │   ├── layout/          # Sidebar, Header, FocusMoodOverlay, Celebration
+│   │   │   ├── layout/          # Sidebar, Header, FocusMoodOverlay, MobileNav, Celebration
 │   │   │   └── dashboard/       # WelcomeBanner, WeeklyChart, PomodoroCard, etc.
 │   │   ├── context/             # AuthContext (JWT, session, preferences)
 │   │   ├── pages/               # Overview, Plan, Tasks, Subjects, Focus, Quizzes, Analytics, Settings
@@ -204,7 +204,7 @@ focusmate/
 │   │   └── main.jsx
 │   ├── tailwind.config.js       # Pastel palette (#FFF0E8, #FF8B76, #FF9856)
 │   └── vite.config.js
-├── server/                      # Node.js + Express Backend
+├── backend/                     # Node.js + Express Backend
 │   ├── src/
 │   │   ├── config/              # MongoDB connection
 │   │   ├── controllers/         # Auth, Dashboard, Tasks, Subjects, Quizzes, etc.

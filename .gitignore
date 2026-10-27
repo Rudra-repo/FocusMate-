@@ -30,5 +30,7 @@ ehthumbs.db
 Thumbs.db
 
 # User Uploaded Static Assets
+backend/public/uploads/*
+!backend/public/uploads/.gitkeep
 server/public/uploads/*
 !server/public/uploads/.gitkeep
