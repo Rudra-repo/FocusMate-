@@ -6,6 +6,8 @@ import { BlockListCard } from '../components/dashboard/BlockListCard';
 import { TodaysTasksCard } from '../components/dashboard/TodaysTasksCard';
 import { PomodoroCard } from '../components/dashboard/PomodoroCard';
 import { FlowerCelebrationModal } from '../components/layout/FlowerCelebrationModal';
+import { ExamAlertsBanner } from '../components/dashboard/ExamAlertsBanner';
+import { AiPlannerModal } from '../components/dashboard/AiPlannerModal';
 import { Sparkles, Brain, ArrowRight, Zap, Target } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
@@ -14,6 +16,7 @@ export const DashboardPage = () => {
   const [dashboardData, setDashboardData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [celebration, setCelebration] = useState({ isOpen: false, minutes: 25, taskTitle: '' });
+  const [isAiPlannerOpen, setIsAiPlannerOpen] = useState(false);
   const navigate = useNavigate();
 
   const fetchDashboard = async () => {
@@ -66,7 +69,10 @@ export const DashboardPage = () => {
 
   return (
     <div className="space-y-6 pb-8">
-      {/* 1. Creative Adaptive Learning Banner if available */}
+      {/* 1. Exam Countdown & Imminent Deadlines Alert Hub with AI Mode Button */}
+      <ExamAlertsBanner onOpenAiPlanner={() => setIsAiPlannerOpen(true)} />
+
+      {/* 2. Adaptive Learning Recommendation Banner */}
       {topRecommendation && (
         <div className="bg-gradient-to-r from-[#FFF2EB] via-white to-[#FFF9F2] rounded-3xl p-4 md:p-5 border border-[#FFD4BF] shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div className="flex items-start gap-3.5">
@@ -97,7 +103,7 @@ export const DashboardPage = () => {
         </div>
       )}
 
-      {/* 2. Main Reference Layout Grid */}
+      {/* 3. Main Reference Layout Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         {/* Left Column (8 cols): Banner, Chart, Performance, Block List */}
         <div className="lg:col-span-7 xl:col-span-8 space-y-6 flex flex-col justify-between">
@@ -132,7 +138,7 @@ export const DashboardPage = () => {
 
         {/* Right Column (5 cols or 4 cols): Today's Tasks & Pomodoro Timer */}
         <div className="lg:col-span-5 xl:col-span-4 space-y-6 flex flex-col justify-between">
-          {/* Today's Tasks */}
+          {/* Today's Tasks with "Speak to Add Task" Voice Feature */}
           <div className="flex-1 min-h-[360px]">
             <TodaysTasksCard
               tasks={todayTasks}
@@ -157,6 +163,12 @@ export const DashboardPage = () => {
         minutes={celebration.minutes}
         taskTitle={celebration.taskTitle}
         onClose={() => setCelebration({ isOpen: false, minutes: 25, taskTitle: '' })}
+      />
+
+      {/* AI Study Mode Planner Modal */}
+      <AiPlannerModal
+        isOpen={isAiPlannerOpen}
+        onClose={() => setIsAiPlannerOpen(false)}
       />
     </div>
   );

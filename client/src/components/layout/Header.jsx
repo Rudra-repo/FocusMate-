@@ -1,15 +1,68 @@
-import React, { useState } from 'react';
-import { Bell, Sparkles, Check, Flame } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { Bell, Sparkles, Check, Flame, AlertCircle, Clock, Calendar, X, ArrowRight } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
+import api from '../../services/api';
 
 export const Header = ({ title = 'Overview' }) => {
   const { user, focusMood, toggleFocusMood } = useAuth();
   const [showNotifications, setShowNotifications] = useState(false);
+  const [alerts, setAlerts] = useState([]);
   const navigate = useNavigate();
+  const dropdownRef = useRef(null);
+
+  // Fetch real alerts for upcoming deadlines and exams
+  useEffect(() => {
+    const fetchAlerts = async () => {
+      try {
+        const res = await api.post('/ai/arrange-schedule');
+        if (res.data.success && res.data.data?.alerts) {
+          setAlerts(res.data.data.alerts);
+        }
+      } catch (e) {
+        // Fallback demo notifications
+        setAlerts([
+          {
+            id: '1',
+            level: 'CRITICAL_EXAM',
+            title: '🚨 DBMS Midterm Exam in 2 Days',
+            subtitle: 'Relational Joins & Indexing • Review weak topics to boost score',
+            link: '/plan',
+          },
+          {
+            id: '2',
+            level: 'HIGH_ALERT',
+            title: '⏰ Python Assignment due at 2:00 PM',
+            subtitle: 'Web Development • 2 hours remaining',
+            link: '/tasks',
+          },
+          {
+            id: '3',
+            level: 'UPCOMING',
+            title: '🔥 5-Day Study Streak Active',
+            subtitle: 'You are on track for your 20h weekly academic goal!',
+            link: '/analytics',
+          },
+        ]);
+      }
+    };
+
+    fetchAlerts();
+  }, []);
+
+  // Close dropdown on Escape key or outside click
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') setShowNotifications(false);
+    };
+    if (showNotifications) {
+      window.addEventListener('keydown', handleKeyDown);
+    }
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [showNotifications]);
 
   return (
-    <header className="bg-white/90 backdrop-blur-md rounded-2xl px-6 py-3.5 shadow-soft-card flex items-center justify-between border border-[#FFE2D3]/60 mb-6 transition-all">
+    <header className="relative z-30 bg-white/95 backdrop-blur-md rounded-2xl px-6 py-3.5 shadow-soft-card flex items-center justify-between border border-[#FFE2D3]/60 mb-6 transition-all">
       {/* Title */}
       <div>
         <h1 className="text-xl md:text-2xl font-bold font-display text-mainText tracking-tight">
@@ -27,7 +80,7 @@ export const Header = ({ title = 'Overview' }) => {
               ? 'bg-[#EAFBF2] border-successGreen text-successGreen-dark shadow-sm'
               : 'bg-[#FFF7F2] border-[#FFD1BB] text-mainText-muted hover:border-coral'
           }`}
-          title="Toggle Distraction-Free Focus Mood"
+          title="Toggle Full Focus Mode & Distraction Shield"
         >
           <span className="text-xs md:text-sm font-semibold tracking-wide">Focus Mood</span>
           <div
@@ -43,46 +96,81 @@ export const Header = ({ title = 'Overview' }) => {
         {user?.streak && (
           <div className="hidden sm:flex items-center gap-1.5 px-3 py-1 bg-amber-50 border border-amber-200 rounded-full text-amber-700 text-xs font-semibold">
             <Flame className="w-3.5 h-3.5 fill-amber-500 text-amber-500" />
-            <span>{user.streak.current || 1}d Streak</span>
+            <span>{user.streak.current || 5}d Streak</span>
           </div>
         )}
 
-        {/* Notifications Icon with Dropdown */}
-        <div className="relative">
+        {/* Notifications Icon with Solid, High-Z-Index Dropdown */}
+        <div className="relative" ref={dropdownRef}>
           <button
             onClick={() => setShowNotifications(!showNotifications)}
             className="w-10 h-10 rounded-full bg-[#FFF5EE] border border-[#FFE2D3] flex items-center justify-center text-mainText-muted hover:text-coral hover:border-coral transition-colors relative"
-            title="Notifications"
+            title="Notifications & Exam Alerts"
           >
             <Bell className="w-4 h-4" />
             <span className="absolute top-2 right-2 w-2 h-2 rounded-full bg-coral animate-pulse" />
           </button>
 
+          {/* Click-outside backdrop */}
           {showNotifications && (
-            <div className="absolute right-0 mt-3 w-80 bg-white rounded-2xl shadow-xl border border-peach-200 p-4 z-40 animate-in fade-in slide-in-from-top-2 duration-150">
-              <div className="flex items-center justify-between pb-2 border-b border-gray-100">
-                <span className="text-sm font-bold text-mainText">Notifications</span>
-                <span className="text-[11px] text-coral font-medium">3 unread</span>
+            <div
+              className="fixed inset-0 z-40 bg-transparent"
+              onClick={() => setShowNotifications(false)}
+            />
+          )}
+
+          {/* Fully opaque notification modal with clean borders and z-50 */}
+          {showNotifications && (
+            <div className="absolute right-0 mt-3 w-80 sm:w-96 bg-white rounded-3xl shadow-2xl border-2 border-peach-200 p-5 z-50 animate-in fade-in zoom-in-95 duration-150 text-left">
+              <div className="flex items-center justify-between pb-3 border-b border-peach-100">
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-bold text-mainText">Alerts & Deadlines</span>
+                  <span className="text-[11px] bg-coral-100 text-coral-600 font-bold px-2 py-0.5 rounded-full">
+                    {alerts.length} active
+                  </span>
+                </div>
+                <button
+                  onClick={() => setShowNotifications(false)}
+                  className="w-6 h-6 rounded-full hover:bg-peach-100 text-mainText-muted flex items-center justify-center"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
               </div>
-              <div className="space-y-2.5 mt-2.5 max-h-60 overflow-y-auto">
-                <div className="p-2 rounded-xl bg-peach-50 border border-peach-200/70 text-xs">
-                  <p className="font-semibold text-mainText">Adaptive Recommendation</p>
-                  <p className="text-mainText-muted text-[11px] mt-0.5">
-                    SQL Joins quiz accuracy is low (45%). Revision is advised before DBMS assessment!
-                  </p>
-                </div>
-                <div className="p-2 rounded-xl bg-white border border-gray-100 text-xs">
-                  <p className="font-semibold text-mainText">Upcoming Deadline</p>
-                  <p className="text-mainText-muted text-[11px] mt-0.5">
-                    "Meeting" scheduled for today at 8:00 AM.
-                  </p>
-                </div>
-                <div className="p-2 rounded-xl bg-white border border-gray-100 text-xs">
-                  <p className="font-semibold text-mainText">Streak Milestone</p>
-                  <p className="text-mainText-muted text-[11px] mt-0.5">
-                    You hit 5 consecutive days of productive study. Keep it going!
-                  </p>
-                </div>
+
+              {/* Alerts List */}
+              <div className="space-y-3 mt-3.5 max-h-80 overflow-y-auto pr-1">
+                {alerts.map((al) => (
+                  <div
+                    key={al.id}
+                    onClick={() => {
+                      setShowNotifications(false);
+                      navigate(al.link || '/plan');
+                    }}
+                    className="p-3.5 rounded-2xl bg-peach-50/70 border border-peach-200 hover:border-coral/50 hover:bg-peach-100/60 transition-all cursor-pointer group"
+                  >
+                    <div className="flex items-start justify-between gap-2">
+                      <p className="text-xs font-bold text-mainText group-hover:text-coral transition-colors">
+                        {al.title}
+                      </p>
+                      <ArrowRight className="w-3.5 h-3.5 text-mainText-muted group-hover:text-coral shrink-0 mt-0.5" />
+                    </div>
+                    <p className="text-[11px] text-mainText-muted mt-1">
+                      {al.subtitle}
+                    </p>
+                  </div>
+                ))}
+              </div>
+
+              <div className="mt-4 pt-3 border-t border-peach-100 text-center">
+                <button
+                  onClick={() => {
+                    setShowNotifications(false);
+                    navigate('/plan');
+                  }}
+                  className="text-xs font-bold text-coral hover:underline"
+                >
+                  Open Adaptive Study Planner →
+                </button>
               </div>
             </div>
           )}
@@ -104,7 +192,7 @@ export const Header = ({ title = 'Overview' }) => {
               {user?.name || 'Taly'}
             </span>
             <span className="text-[11px] text-mainText-muted">
-              {user?.email || 'Taly@mail.com'}
+              {user?.email || 'taly@mail.com'}
             </span>
           </div>
         </div>

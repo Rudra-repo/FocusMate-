@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Clock, Send, Check, Plus, ChevronDown } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { Clock, Send, Check, Plus, ChevronDown, Mic, MicOff, Sparkles } from 'lucide-react';
 import api from '../../services/api';
 
 export const TodaysTasksCard = ({ tasks = [], subjects = [], onTasksUpdated }) => {
@@ -7,6 +7,67 @@ export const TodaysTasksCard = ({ tasks = [], subjects = [], onTasksUpdated }) =
   const [selectedCategory, setSelectedCategory] = useState('Work');
   const [selectedTime, setSelectedTime] = useState('02:00 PM');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isListening, setIsListening] = useState(false);
+  const [speechFeedback, setSpeechFeedback] = useState('');
+
+  const recognitionRef = useRef(null);
+
+  // Initialize Speech Recognition
+  useEffect(() => {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (SpeechRecognition) {
+      const recognition = new SpeechRecognition();
+      recognition.continuous = false;
+      recognition.interimResults = false;
+      recognition.lang = 'en-US';
+
+      recognition.onstart = () => {
+        setIsListening(true);
+        setSpeechFeedback('Listening... Speak your task now!');
+      };
+
+      recognition.onresult = (event) => {
+        const transcript = event.results[0][0].transcript;
+        if (transcript) {
+          setNewTitle(transcript);
+          setSpeechFeedback(`Heard: "${transcript}"`);
+          setTimeout(() => setSpeechFeedback(''), 3000);
+        }
+      };
+
+      recognition.onerror = (event) => {
+        console.warn('Speech recognition error:', event.error);
+        setIsListening(false);
+        setSpeechFeedback('Voice input error. Please try again.');
+        setTimeout(() => setSpeechFeedback(''), 3000);
+      };
+
+      recognition.onend = () => {
+        setIsListening(false);
+      };
+
+      recognitionRef.current = recognition;
+    }
+  }, []);
+
+  const handleToggleVoice = () => {
+    if (!recognitionRef.current) {
+      alert('Speech recognition is not supported in this browser. Please use Chrome or Edge.');
+      return;
+    }
+
+    if (isListening) {
+      recognitionRef.current.stop();
+      setIsListening(false);
+    } else {
+      try {
+        recognitionRef.current.start();
+      } catch (err) {
+        recognitionRef.current.stop();
+        setTimeout(() => recognitionRef.current.start(), 200);
+      }
+    }
+  };
 
   // Format time display helper
   const formatDueTime = (dueAt) => {
@@ -35,12 +96,10 @@ export const TodaysTasksCard = ({ tasks = [], subjects = [], onTasksUpdated }) =
 
     setIsSubmitting(true);
     try {
-      // Find matching subject if available or default
       const matchedSubject = subjects.find(
         (s) => s.name.toLowerCase() === selectedCategory.toLowerCase()
       );
 
-      // Create due date for today at chosen time
       const now = new Date();
       const [time, modifier] = selectedTime.split(' ');
       let [hours, minutes] = time.split(':');
@@ -59,6 +118,7 @@ export const TodaysTasksCard = ({ tasks = [], subjects = [], onTasksUpdated }) =
       });
 
       setNewTitle('');
+      setSpeechFeedback('');
       if (onTasksUpdated) onTasksUpdated();
     } catch (err) {
       console.error('Failed to create quick task:', err);
@@ -71,9 +131,17 @@ export const TodaysTasksCard = ({ tasks = [], subjects = [], onTasksUpdated }) =
     <div className="bg-white/95 rounded-3xl p-5 md:p-6 shadow-soft-card border border-[#FFE2D3]/60 flex flex-col justify-between h-full transition-all">
       <div>
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-base md:text-lg font-bold text-mainText font-display">
-            Today's Tasks
-          </h3>
+          <div className="flex items-center gap-2">
+            <h3 className="text-base md:text-lg font-bold text-mainText font-display">
+              Today's Tasks
+            </h3>
+            {isListening && (
+              <span className="flex items-center gap-1 text-[11px] text-red-500 font-bold bg-red-50 px-2 py-0.5 rounded-full border border-red-200 animate-pulse">
+                <span className="w-2 h-2 rounded-full bg-red-500" />
+                Listening...
+              </span>
+            )}
+          </div>
           <span className="text-xs font-semibold text-mainText-muted bg-peach-50 px-2.5 py-1 rounded-full border border-peach-200">
             {tasks.filter((t) => t.status === 'completed').length}/{tasks.length} Done
           </span>
@@ -83,7 +151,7 @@ export const TodaysTasksCard = ({ tasks = [], subjects = [], onTasksUpdated }) =
         <div className="space-y-3.5 max-h-[300px] overflow-y-auto pr-1">
           {tasks.length === 0 ? (
             <div className="py-8 text-center text-mainText-muted text-xs">
-              Your day is clear — plan a 25-minute focus session!
+              Your day is clear — use voice or type to plan a 25-minute focus session!
             </div>
           ) : (
             tasks.map((task) => {
@@ -99,7 +167,6 @@ export const TodaysTasksCard = ({ tasks = [], subjects = [], onTasksUpdated }) =
                   }`}
                 >
                   <div className="flex items-center gap-3.5 flex-1 min-w-0">
-                    {/* Custom rounded checkbox */}
                     <button
                       onClick={() => handleToggleComplete(task)}
                       className={`w-5 h-5 rounded-lg border flex items-center justify-center transition-all ${
@@ -131,7 +198,6 @@ export const TodaysTasksCard = ({ tasks = [], subjects = [], onTasksUpdated }) =
                     </div>
                   </div>
 
-                  {/* Due Time */}
                   <span className="text-xs font-semibold text-mainText-muted ml-2 whitespace-nowrap">
                     {formatDueTime(task.dueAt)}
                   </span>
@@ -142,7 +208,14 @@ export const TodaysTasksCard = ({ tasks = [], subjects = [], onTasksUpdated }) =
         </div>
       </div>
 
-      {/* Quick Add Bar at bottom matching mockup */}
+      {/* Voice Status Pill */}
+      {speechFeedback && (
+        <div className="my-2 p-2 rounded-xl bg-peach-100 text-coral-dark text-xs font-medium text-center animate-in fade-in duration-150">
+          🎙️ {speechFeedback}
+        </div>
+      )}
+
+      {/* Quick Add Bar with "Speak to Add Task" Button */}
       <form
         onSubmit={handleQuickAdd}
         className="mt-4 pt-3 border-t border-peach-100 flex items-center gap-2"
@@ -150,12 +223,30 @@ export const TodaysTasksCard = ({ tasks = [], subjects = [], onTasksUpdated }) =
         <div className="relative flex-1">
           <input
             type="text"
-            placeholder="+ Add New Task for Today"
+            placeholder={isListening ? 'Listening to voice...' : '+ Add New Task for Today'}
             value={newTitle}
             onChange={(e) => setNewTitle(e.target.value)}
-            className="w-full text-xs md:text-sm pl-3 pr-2 py-2 rounded-2xl border border-peach-200 bg-peach-50/60 focus:bg-white focus:outline-none focus:border-coral text-mainText placeholder-mainText-muted"
+            className={`w-full text-xs md:text-sm pl-3 pr-2 py-2 rounded-2xl border transition-all text-mainText placeholder-mainText-muted focus:outline-none ${
+              isListening
+                ? 'border-red-400 bg-red-50/40 ring-2 ring-red-200'
+                : 'border-peach-200 bg-peach-50/60 focus:bg-white focus:border-coral'
+            }`}
           />
         </div>
+
+        {/* Speak to Add Task Microphone Button */}
+        <button
+          type="button"
+          onClick={handleToggleVoice}
+          className={`w-9 h-9 rounded-2xl flex items-center justify-center transition-all ${
+            isListening
+              ? 'bg-red-500 text-white shadow-md scale-105 animate-pulse'
+              : 'bg-peach-100 text-coral hover:bg-coral hover:text-white border border-peach-200 shadow-sm'
+          }`}
+          title={isListening ? 'Stop listening' : 'Speak to Add Task (Voice Recognition)'}
+        >
+          {isListening ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
+        </button>
 
         {/* Category Pill Dropdown */}
         <div className="relative">

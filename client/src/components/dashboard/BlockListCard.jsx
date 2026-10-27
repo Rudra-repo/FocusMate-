@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Plus, X as CloseIcon, ShieldCheck } from 'lucide-react';
+import { Plus, X as CloseIcon, ShieldCheck, Sparkles } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 
 export const BlockListCard = ({ blockedItems = [], onUpdateList }) => {
@@ -8,12 +8,20 @@ export const BlockListCard = ({ blockedItems = [], onUpdateList }) => {
   const [newItemName, setNewItemName] = useState('');
 
   const defaultItems = [
-    { id: 'telegram', name: 'Telegram', icon: 'telegram', category: 'Chat' },
-    { id: 'instagram', name: 'Instagram', icon: 'instagram', category: 'Social' },
-    { id: 'x', name: 'X', icon: 'x', category: 'Social' },
+    { id: 'telegram', name: 'Telegram', category: 'Chat' },
+    { id: 'instagram', name: 'Instagram', category: 'Social' },
+    { id: 'x', name: 'X', category: 'Social' },
   ];
 
   const items = blockedItems && blockedItems.length > 0 ? blockedItems : defaultItems;
+
+  const popularPresets = [
+    { name: 'YouTube', category: 'Video' },
+    { name: 'Reddit', category: 'Forum' },
+    { name: 'Discord', category: 'Chat' },
+    { name: 'Netflix', category: 'Video' },
+    { name: 'TikTok', category: 'Social' },
+  ];
 
   const handleRemove = async (idToRemove) => {
     const updated = items.filter((item) => (item.id || item._id) !== idToRemove);
@@ -21,14 +29,19 @@ export const BlockListCard = ({ blockedItems = [], onUpdateList }) => {
     await updatePreferences({ blockedItems: updated });
   };
 
-  const handleAdd = async (e) => {
-    e.preventDefault();
-    if (!newItemName.trim()) return;
+  const handleAdd = async (nameToAdd) => {
+    const name = (nameToAdd || newItemName).trim();
+    if (!name) return;
+
+    // Check if already blocked
+    if (items.some((i) => i.name.toLowerCase() === name.toLowerCase())) {
+      setIsAdding(false);
+      return;
+    }
 
     const newItem = {
-      id: newItemName.toLowerCase().replace(/\s+/g, '-'),
-      name: newItemName.trim(),
-      icon: 'custom',
+      id: name.toLowerCase().replace(/\s+/g, '-'),
+      name,
       category: 'Distraction',
     };
 
@@ -74,6 +87,16 @@ export const BlockListCard = ({ blockedItems = [], onUpdateList }) => {
       );
     }
 
+    if (key.includes('youtube')) {
+      return (
+        <div className="w-12 h-12 rounded-2xl bg-[#FF0000] flex items-center justify-center text-white shadow-sm hover:scale-105 transition-transform">
+          <svg className="w-6 h-6 fill-current" viewBox="0 0 24 24">
+            <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
+          </svg>
+        </div>
+      );
+    }
+
     return (
       <div className="w-12 h-12 rounded-2xl bg-peach-200 text-coral-dark font-bold text-sm flex items-center justify-center shadow-sm">
         {item.name.slice(0, 2).toUpperCase()}
@@ -89,6 +112,9 @@ export const BlockListCard = ({ blockedItems = [], onUpdateList }) => {
             Block List
           </h3>
           <span className="w-2 h-2 rounded-full bg-successGreen" title="Shield active"></span>
+          <span className="text-[10px] text-mainText-muted font-medium hidden sm:inline">
+            ({items.length} blocked)
+          </span>
         </div>
         <button
           onClick={() => setIsAdding(!isAdding)}
@@ -101,22 +127,39 @@ export const BlockListCard = ({ blockedItems = [], onUpdateList }) => {
 
       {/* Add New Distraction Input */}
       {isAdding && (
-        <form onSubmit={handleAdd} className="mb-3 flex items-center gap-2 animate-in fade-in duration-150">
-          <input
-            type="text"
-            placeholder="e.g. YouTube, TikTok..."
-            value={newItemName}
-            onChange={(e) => setNewItemName(e.target.value)}
-            className="flex-1 text-xs px-3 py-1.5 rounded-xl border border-peach-300 focus:outline-none focus:border-coral bg-peach-50"
-            autoFocus
-          />
-          <button
-            type="submit"
-            className="text-xs px-3 py-1.5 rounded-xl bg-coral text-white font-semibold hover:bg-coral-dark"
-          >
-            Add
-          </button>
-        </form>
+        <div className="mb-3.5 p-3 rounded-2xl bg-peach-50/80 border border-peach-200 animate-in fade-in duration-150">
+          <form onSubmit={(e) => { e.preventDefault(); handleAdd(); }} className="flex items-center gap-2 mb-2">
+            <input
+              type="text"
+              placeholder="e.g. Netflix, YouTube, Reddit, Discord..."
+              value={newItemName}
+              onChange={(e) => setNewItemName(e.target.value)}
+              className="flex-1 text-xs px-3 py-1.5 rounded-xl border border-peach-300 focus:outline-none focus:border-coral bg-white"
+              autoFocus
+            />
+            <button
+              type="submit"
+              className="text-xs px-3 py-1.5 rounded-xl bg-coral text-white font-semibold hover:bg-coral-dark shadow-sm"
+            >
+              Block
+            </button>
+          </form>
+
+          {/* Preset 1-click pill additions */}
+          <div className="flex items-center gap-1.5 flex-wrap pt-1">
+            <span className="text-[10px] text-mainText-muted font-bold">Quick Add:</span>
+            {popularPresets.map((p) => (
+              <button
+                key={p.name}
+                type="button"
+                onClick={() => handleAdd(p.name)}
+                className="text-[10px] font-semibold px-2 py-0.5 rounded-lg bg-white border border-peach-200 hover:border-coral text-mainText hover:text-coral transition-colors"
+              >
+                + {p.name}
+              </button>
+            ))}
+          </div>
+        </div>
       )}
 
       {/* App Icons Row matching the reference image */}

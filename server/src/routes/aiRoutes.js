@@ -7,5 +7,6 @@ router.use(protect);
 
 router.post('/explain', aiController.explainConcept);
 router.post('/practice-questions', aiController.generatePracticeQuestions);
+router.post('/arrange-schedule', aiController.arrangeSchedule);
 
 module.exports = router;
