@@ -7,6 +7,17 @@ const connectDB = async () => {
       serverSelectionTimeoutMS: 5000,
     });
     console.log(` MongoDB Connected: ${conn.connection.host}/${conn.connection.name}`);
+
+    // Automatically ensure demo student profile and curriculum exist
+    try {
+      const { seedDemoUserIfNotExists } = require('../utils/seedData');
+      seedDemoUserIfNotExists().catch((err) => {
+        console.warn('⚠️ Auto-seed notice:', err.message);
+      });
+    } catch (seedErr) {
+      console.warn('⚠️ Could not run auto-seed check:', seedErr.message);
+    }
+
     return conn;
   } catch (error) {
     console.error(`❌ MongoDB Connection Error: ${error.message}`);

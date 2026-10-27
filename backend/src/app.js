@@ -46,8 +46,8 @@ if (process.env.NODE_ENV !== 'production') {
   app.use(morgan('dev'));
 }
 
-// Health check endpoint
-app.get('/api/health', (req, res) => {
+// Health check endpoints (for Render, cron pings, and frontend wake-up)
+app.get(['/health', '/api/health', '/'], (req, res) => {
   res.status(200).json({
     status: 'healthy',
     timestamp: new Date().toISOString(),

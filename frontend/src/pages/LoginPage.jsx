@@ -1,28 +1,41 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { Sparkles, ArrowRight, Lock, Mail, UserCheck } from 'lucide-react';
+import { Sparkles, ArrowRight, Lock, Mail, UserCheck, Loader2 } from 'lucide-react';
+import api from '../services/api';
 
 export const LoginPage = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [slowNotice, setSlowNotice] = useState(false);
 
   const { login } = useAuth();
   const navigate = useNavigate();
+
+  useEffect(() => {
+    // Silently pre-warm server in background on page load
+    api.get('/health').catch(() => {});
+  }, []);
 
   const handleLogin = async (e) => {
     e.preventDefault();
     setError('');
     setLoading(true);
+    setSlowNotice(false);
+
+    const timer = setTimeout(() => setSlowNotice(true), 3000);
 
     try {
       await login(email, password);
       navigate('/');
     } catch (err) {
-      setError(err.response?.data?.message || 'Login failed. Please check your credentials.');
+      const msg = err.response?.data?.message || (!err.response ? 'Server was waking up from sleep mode. Please try once more.' : 'Login failed. Please check your credentials.');
+      setError(msg);
     } finally {
+      clearTimeout(timer);
+      setSlowNotice(false);
       setLoading(false);
     }
   };
@@ -30,13 +43,21 @@ export const LoginPage = () => {
   const handleDemoLogin = async () => {
     setEmail('taly@mail.com');
     setPassword('focusmate123');
+    setError('');
     setLoading(true);
+    setSlowNotice(false);
+
+    const timer = setTimeout(() => setSlowNotice(true), 3000);
+
     try {
       await login('taly@mail.com', 'focusmate123');
       navigate('/');
     } catch (err) {
-      setError('Demo login failed. Make sure server is running and seeded.');
+      const msg = err.response?.data?.message || (!err.response ? 'Cloud server was waking up from sleep mode. Please try Demo Login once more.' : 'Demo login failed. Initializing demo account, please try again.');
+      setError(msg);
     } finally {
+      clearTimeout(timer);
+      setSlowNotice(false);
       setLoading(false);
     }
   };
@@ -67,11 +88,19 @@ export const LoginPage = () => {
             type="button"
             onClick={handleDemoLogin}
             disabled={loading}
-            className="px-3.5 py-1.5 rounded-xl bg-coral hover:bg-coral-dark text-white text-xs font-bold shadow-sm transition-all hover:scale-105 active:scale-95 whitespace-nowrap"
+            className="px-3.5 py-1.5 rounded-xl bg-coral hover:bg-coral-dark text-white text-xs font-bold shadow-sm transition-all hover:scale-105 active:scale-95 whitespace-nowrap flex items-center gap-1.5 disabled:opacity-75"
           >
-            Demo Login
+            {loading && email === 'taly@mail.com' && <Loader2 className="w-3 h-3 animate-spin" />}
+            <span>Demo Login</span>
           </button>
         </div>
+
+        {slowNotice && (
+          <div className="p-3 rounded-xl bg-amber-50 text-amber-800 text-xs font-semibold mb-4 border border-amber-200 flex items-center gap-2 animate-pulse">
+            <Loader2 className="w-4 h-4 animate-spin text-amber-600 shrink-0" />
+            <span>Connecting to server... If sleeping on free cloud tier, waking up takes ~30-40s.</span>
+          </div>
+        )}
 
         {error && (
           <div className="p-3 rounded-xl bg-red-50 text-red-600 text-xs font-semibold mb-4 border border-red-200">
@@ -113,10 +142,11 @@ export const LoginPage = () => {
           <button
             type="submit"
             disabled={loading}
-            className="w-full py-3 rounded-2xl bg-coral hover:bg-coral-dark text-white font-extrabold text-sm shadow-soft-peach transition-all duration-200 hover:scale-[1.01] active:scale-[0.99] flex items-center justify-center gap-2 mt-2"
+            className="w-full py-3 rounded-2xl bg-coral hover:bg-coral-dark text-white font-extrabold text-sm shadow-soft-peach transition-all duration-200 hover:scale-[1.01] active:scale-[0.99] flex items-center justify-center gap-2 mt-2 disabled:opacity-75"
           >
-            <span>{loading ? 'Signing In...' : 'Sign In'}</span>
-            <ArrowRight className="w-4 h-4 stroke-[2.5]" />
+            {loading && email !== 'taly@mail.com' && <Loader2 className="w-4 h-4 animate-spin" />}
+            <span>{loading ? 'Connecting...' : 'Sign In'}</span>
+            {!loading && <ArrowRight className="w-4 h-4 stroke-[2.5]" />}
           </button>
         </form>
 

@@ -9,57 +9,19 @@ const Quiz = require('../models/Quiz');
 const QuizAttempt = require('../models/QuizAttempt');
 const Goal = require('../models/Goal');
 
-const seed = async () => {
+const seedUserData = async (user) => {
   try {
-    const mongoUri = process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/focusmate';
-    await mongoose.connect(mongoUri);
-    console.log('Connected to MongoDB for seeding...');
+    // Clear any existing data for this specific user before seeding
+  await Subject.deleteMany({ userId: user._id });
+  await Topic.deleteMany({ userId: user._id });
+  await Task.deleteMany({ userId: user._id });
+  await FocusSession.deleteMany({ userId: user._id });
+  await Quiz.deleteMany({ userId: user._id });
+  await QuizAttempt.deleteMany({ userId: user._id });
+  await Goal.deleteMany({ userId: user._id });
 
-    // Clear existing collections
-    await User.deleteMany({});
-    await Subject.deleteMany({});
-    await Topic.deleteMany({});
-    await Task.deleteMany({});
-    await FocusSession.deleteMany({});
-    await Quiz.deleteMany({});
-    await QuizAttempt.deleteMany({});
-    await Goal.deleteMany({});
-
-    console.log('Cleared existing collections.');
-
-    // 1. Create Demo User "Taly" matching the reference mockup
-    const passwordHash = await User.hashPassword('focusmate123');
-    const user = await User.create({
-      name: 'Taly',
-      email: 'taly@mail.com',
-      passwordHash,
-      avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=250&q=80',
-      dailyGoalMinutes: 180, // 3 hours
-      preferences: {
-        focusDuration: 25,
-        breakDuration: 5,
-        longBreakDuration: 15,
-        soundEnabled: true,
-        ambientSound: 'none',
-        theme: 'pastel',
-        blockedItems: [
-          { id: 'telegram', name: 'Telegram', icon: 'telegram', category: 'Chat' },
-          { id: 'instagram', name: 'Instagram', icon: 'instagram', category: 'Social' },
-          { id: 'x', name: 'X', icon: 'x', category: 'Social' },
-        ],
-        focusMoodActive: false,
-      },
-      streak: {
-        current: 5,
-        longest: 12,
-        lastActiveDate: new Date(),
-      },
-    });
-
-    console.log(`Created user: ${user.name} (${user.email})`);
-
-    // 2. Create Subjects
-    const subjectsData = [
+  // 2. Create Subjects
+  const subjectsData = [
       {
         userId: user._id,
         name: 'Math practice',
@@ -416,6 +378,90 @@ const seed = async () => {
       completed: false,
     });
 
+    return true;
+  } catch (error) {
+    console.error('Seeding user data failed:', error);
+    throw error;
+  }
+};
+
+const createTalyUser = async () => {
+  const passwordHash = await User.hashPassword('focusmate123');
+  return await User.create({
+    name: 'Taly',
+    email: 'taly@mail.com',
+    passwordHash,
+    avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=250&q=80',
+    dailyGoalMinutes: 180, // 3 hours
+    preferences: {
+      focusDuration: 25,
+      breakDuration: 5,
+      longBreakDuration: 15,
+      soundEnabled: true,
+      ambientSound: 'none',
+      theme: 'pastel',
+      blockedItems: [
+        { id: 'telegram', name: 'Telegram', icon: 'telegram', category: 'Chat' },
+        { id: 'instagram', name: 'Instagram', icon: 'instagram', category: 'Social' },
+        { id: 'x', name: 'X', icon: 'x', category: 'Social' },
+      ],
+      focusMoodActive: false,
+    },
+    streak: {
+      current: 5,
+      longest: 12,
+      lastActiveDate: new Date(),
+    },
+  });
+};
+
+const seedDemoUserIfNotExists = async () => {
+  try {
+    let user = await User.findOne({ email: 'taly@mail.com' });
+    if (!user) {
+      console.log('🌱 Demo user Taly not found. Auto-seeding sample student profile...');
+      user = await createTalyUser();
+      await seedUserData(user);
+      console.log('✅ Demo profile seeded successfully!');
+      return user;
+    }
+
+    const subjectCount = await Subject.countDocuments({ userId: user._id });
+    if (subjectCount === 0) {
+      console.log('🌱 Demo user exists but has 0 subjects. Seeding demo academic curriculum...');
+      await seedUserData(user);
+      console.log('✅ Demo academic curriculum seeded successfully!');
+    }
+    return user;
+  } catch (err) {
+    console.error('⚠️ Auto-seed check error:', err.message);
+    return null;
+  }
+};
+
+const seed = async () => {
+  try {
+    const mongoUri = process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/focusmate';
+    await mongoose.connect(mongoUri);
+    console.log('Connected to MongoDB for seeding...');
+
+    // Clear existing collections
+    await User.deleteMany({});
+    await Subject.deleteMany({});
+    await Topic.deleteMany({});
+    await Task.deleteMany({});
+    await FocusSession.deleteMany({});
+    await Quiz.deleteMany({});
+    await QuizAttempt.deleteMany({});
+    await Goal.deleteMany({});
+
+    console.log('Cleared existing collections.');
+
+    const user = await createTalyUser();
+    console.log(`Created user: ${user.name} (${user.email})`);
+
+    await seedUserData(user);
+
     console.log(' Database seed completed successfully!');
     process.exit(0);
   } catch (error) {
@@ -424,4 +470,13 @@ const seed = async () => {
   }
 };
 
-seed();
+if (require.main === module) {
+  seed();
+}
+
+module.exports = {
+  seed,
+  seedUserData,
+  seedDemoUserIfNotExists,
+  createTalyUser,
+};
