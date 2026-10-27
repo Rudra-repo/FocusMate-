@@ -6,6 +6,14 @@ Designed with a warm peach (`#FFF0E8`), coral (`#FF8B76`), orange (`#FF9856`), a
 
 ---
 
+## 🚀 Live Demo & Video Walkthrough
+
+- 🌐 **Live Deployed App**: [https://focusmate-snowy.vercel.app/](https://focusmate-snowy.vercel.app/)
+- 🎥 **Video Demo Walkthrough**: [Watch Video on Google Drive](https://drive.google.com/file/d/1tFB_2dbH65-hQ4sBDqlzBFbNCA8Fgbbg/view?usp=sharing)
+- 👤 **1-Click Demo Login**: Click the **"Demo Login"** button on the sign-in screen to instantly explore sample student **Taly**'s dashboard, quizzes, study notes, and Pomodoro focus sessions.
+
+---
+
 ## 📸 Visual Design & Reference Alignment
 
 FocusMate faithfully reproduces the warm pastel aesthetic and dashboard layout:
