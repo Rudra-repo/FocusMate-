@@ -1,16 +1,12 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { ChevronDown, Minus, Plus, Play, Pause, RotateCcw } from 'lucide-react';
-import api from '../../services/api';
+import React, { useState, useEffect } from 'react';
+import { ChevronDown, Minus, Plus, Play } from 'lucide-react';
+import { useAuth } from '../../context/AuthContext';
 
-export const PomodoroCard = ({ subjects = [], onSessionComplete }) => {
+export const PomodoroCard = ({ subjects = [] }) => {
+  const { startFullFocusMode } = useAuth();
   const [selectedSubjectId, setSelectedSubjectId] = useState(() => subjects[0]?._id || '');
   const [targetMinutes, setTargetMinutes] = useState(25);
-  const [secondsRemaining, setSecondsRemaining] = useState(25 * 60);
-  const [isActive, setIsActive] = useState(false);
-  const [sessionStartTime, setSessionStartTime] = useState(null);
   const [mode, setMode] = useState('focus'); // 'focus', 'short_break', 'long_break'
-
-  const intervalRef = useRef(null);
 
   useEffect(() => {
     if (subjects.length > 0 && !selectedSubjectId) {
@@ -18,81 +14,23 @@ export const PomodoroCard = ({ subjects = [], onSessionComplete }) => {
     }
   }, [subjects]);
 
-  // Handle countdown
-  useEffect(() => {
-    if (isActive) {
-      intervalRef.current = setInterval(() => {
-        setSecondsRemaining((prev) => {
-          if (prev <= 1) {
-            clearInterval(intervalRef.current);
-            handleCompletedTimer();
-            return 0;
-          }
-          return prev - 1;
-        });
-      }, 1000);
-    } else {
-      clearInterval(intervalRef.current);
-    }
-    return () => clearInterval(intervalRef.current);
-  }, [isActive]);
-
-  const handleStart = () => {
-    if (!isActive && !sessionStartTime) {
-      setSessionStartTime(new Date());
-    }
-    setIsActive(true);
-  };
-
-  const handlePause = () => {
-    setIsActive(false);
-  };
-
-  const handleReset = () => {
-    setIsActive(false);
-    setSessionStartTime(null);
-    setSecondsRemaining(targetMinutes * 60);
-  };
-
   const adjustMinutes = (delta) => {
-    if (isActive) return;
     const nextMin = Math.max(5, Math.min(120, targetMinutes + delta));
     setTargetMinutes(nextMin);
-    setSecondsRemaining(nextMin * 60);
   };
 
-  const handleCompletedTimer = async () => {
-    setIsActive(false);
-    const endTime = new Date();
-    const startTime = sessionStartTime || new Date(endTime.getTime() - targetMinutes * 60 * 1000);
-
-    try {
-      // Send real start and end timestamps to server as requested in PRD
-      await api.post('/focus-sessions', {
-        startedAt: startTime.toISOString(),
-        endedAt: endTime.toISOString(),
-        subjectId: selectedSubjectId || null,
-        sessionType: mode,
-        targetMinutes,
-        notes: `Focus block on ${subjects.find((s) => s._id === selectedSubjectId)?.name || 'Study'}`,
-      });
-
-      if (onSessionComplete) {
-        onSessionComplete(targetMinutes, subjects.find((s) => s._id === selectedSubjectId)?.name);
-      }
-    } catch (err) {
-      console.error('Failed to record focus session on server:', err);
-    } finally {
-      setSessionStartTime(null);
-      setSecondsRemaining(targetMinutes * 60);
-    }
+  // Launch Full Focus Mode directly upon clicking Start
+  const handleStart = () => {
+    const subObj = subjects.find((s) => s._id === selectedSubjectId);
+    startFullFocusMode({
+      targetMinutes,
+      subjectName: subObj?.name || 'Math practice',
+      subjectId: selectedSubjectId || null,
+    });
   };
 
-  // Format MM:SS
-  const formatTime = (totalSeconds) => {
-    const mins = Math.floor(totalSeconds / 60);
-    const secs = totalSeconds % 60;
-    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+  const formatTime = (minutes) => {
+    return `${minutes.toString().padStart(2, '0')}:00`;
   };
 
   return (
@@ -104,7 +42,7 @@ export const PomodoroCard = ({ subjects = [], onSessionComplete }) => {
             Pomodoro Timer
           </h3>
           <span className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-white/60 text-coral-dark uppercase tracking-wider">
-            {mode === 'focus' ? 'Focus' : 'Break'}
+            {mode === 'focus' ? 'Focus Mode' : 'Break'}
           </span>
         </div>
 
@@ -113,7 +51,6 @@ export const PomodoroCard = ({ subjects = [], onSessionComplete }) => {
           <select
             value={selectedSubjectId}
             onChange={(e) => setSelectedSubjectId(e.target.value)}
-            disabled={isActive}
             className="text-xs font-bold text-mainText/90 bg-transparent hover:bg-white/30 rounded-xl py-1 pl-1 pr-6 cursor-pointer focus:outline-none appearance-none transition-colors"
           >
             {subjects.map((sub) => (
@@ -133,16 +70,14 @@ export const PomodoroCard = ({ subjects = [], onSessionComplete }) => {
 
       {/* Centerpiece Hourglass Illustration Graphic matching the mockup */}
       <div className="flex items-center justify-center my-3">
-        <div className="relative group">
+        <div className="relative group cursor-pointer" onClick={handleStart}>
           <svg
-            className={`w-14 h-16 drop-shadow-md transition-transform ${
-              isActive ? 'animate-pulse' : 'group-hover:scale-105'
-            }`}
+            className="w-14 h-16 drop-shadow-md transition-transform group-hover:scale-105"
             viewBox="0 0 70 80"
             fill="none"
             xmlns="http://www.w3.org/2000/svg"
           >
-            {/* Hourglass Outer Frame (Glass and golden caps) */}
+            {/* Hourglass Caps */}
             <path
               d="M10 8 C10 6, 12 4, 15 4 L55 4 C58 4, 60 6, 60 8 L60 12 L10 12 Z"
               fill="#E09F5E"
@@ -160,24 +95,11 @@ export const PomodoroCard = ({ subjects = [], onSessionComplete }) => {
               stroke="#DDA575"
               strokeWidth="1.5"
             />
-            {/* Top Sand (Teal/Green matching mockup) */}
+            {/* Sand (Teal/Green matching mockup) */}
             <path
               d="M20 20 C20 30, 32 36, 35 37 C38 36, 50 30, 50 20 Z"
               fill="#74C99A"
             />
-            {/* Trickling Sand Line */}
-            {isActive && (
-              <line
-                x1="35"
-                y1="38"
-                x2="35"
-                y2="58"
-                stroke="#74C99A"
-                strokeWidth="2"
-                strokeDasharray="2 2"
-              />
-            )}
-            {/* Bottom Accumulated Sand Mound */}
             <path
               d="M22 66 C22 58, 32 54, 35 54 C38 54, 48 58, 48 66 Z"
               fill="#74C99A"
@@ -190,7 +112,7 @@ export const PomodoroCard = ({ subjects = [], onSessionComplete }) => {
       <div className="flex items-center justify-center gap-4 my-1">
         <button
           onClick={() => adjustMinutes(-5)}
-          disabled={isActive || targetMinutes <= 5}
+          disabled={targetMinutes <= 5}
           className="w-7 h-7 rounded-full bg-white/70 hover:bg-white text-mainText flex items-center justify-center shadow-sm disabled:opacity-30 transition-all hover:scale-105 active:scale-95"
           title="Decrease 5 minutes"
         >
@@ -198,12 +120,12 @@ export const PomodoroCard = ({ subjects = [], onSessionComplete }) => {
         </button>
 
         <span className="text-2xl md:text-3xl font-extrabold font-display tracking-tight text-mainText select-none min-w-[90px] text-center">
-          {formatTime(secondsRemaining)}
+          {formatTime(targetMinutes)}
         </span>
 
         <button
           onClick={() => adjustMinutes(5)}
-          disabled={isActive || targetMinutes >= 120}
+          disabled={targetMinutes >= 120}
           className="w-7 h-7 rounded-full bg-white/70 hover:bg-white text-mainText flex items-center justify-center shadow-sm disabled:opacity-30 transition-all hover:scale-105 active:scale-95"
           title="Increase 5 minutes"
         >
@@ -211,34 +133,15 @@ export const PomodoroCard = ({ subjects = [], onSessionComplete }) => {
         </button>
       </div>
 
-      {/* Large Start/Pause Pill Button matching mockup */}
-      <div className="mt-3 flex items-center gap-2">
+      {/* Large Start Pill Button: Launches full focus mode immediately */}
+      <div className="mt-3">
         <button
-          onClick={isActive ? handlePause : handleStart}
-          className="flex-1 py-2.5 px-6 rounded-full bg-white hover:bg-peach-50 text-mainText font-bold text-sm shadow-md hover:shadow-lg transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] flex items-center justify-center gap-2"
+          onClick={handleStart}
+          className="w-full py-2.5 px-6 rounded-full bg-white hover:bg-peach-50 text-mainText font-bold text-sm shadow-md hover:shadow-lg transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] flex items-center justify-center gap-2"
         >
-          {isActive ? (
-            <>
-              <Pause className="w-4 h-4 fill-mainText" />
-              <span>Pause</span>
-            </>
-          ) : (
-            <>
-              <Play className="w-4 h-4 fill-mainText ml-0.5" />
-              <span>Start</span>
-            </>
-          )}
+          <Play className="w-4 h-4 fill-mainText ml-0.5" />
+          <span>Start Full Focus</span>
         </button>
-
-        {sessionStartTime && (
-          <button
-            onClick={handleReset}
-            className="w-10 h-10 rounded-full bg-white/70 hover:bg-white text-mainText flex items-center justify-center shadow-sm transition-all"
-            title="Reset Timer"
-          >
-            <RotateCcw className="w-4 h-4" />
-          </button>
-        )}
       </div>
     </div>
   );

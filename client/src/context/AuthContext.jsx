@@ -11,6 +11,14 @@ export const AuthProvider = ({ children }) => {
   const [token, setToken] = useState(() => localStorage.getItem('focusmate_token') || null);
   const [loading, setLoading] = useState(true);
   const [focusMood, setFocusMood] = useState(false);
+  const [focusSessionConfig, setFocusSessionConfig] = useState({
+    targetMinutes: 25,
+    taskTitle: '',
+    subjectName: 'General Study',
+    subjectId: null,
+    taskId: null,
+    startedAt: null,
+  });
 
   useEffect(() => {
     const fetchMe = async () => {
@@ -22,7 +30,6 @@ export const AuthProvider = ({ children }) => {
         const res = await api.get('/auth/me');
         if (res.data.success) {
           setUser(res.data.user);
-          setFocusMood(res.data.user?.preferences?.focusMoodActive || false);
           localStorage.setItem('focusmate_user', JSON.stringify(res.data.user));
         }
       } catch (err) {
@@ -44,7 +51,6 @@ export const AuthProvider = ({ children }) => {
     if (res.data.success) {
       setUser(res.data.user);
       setToken(res.data.token);
-      setFocusMood(res.data.user?.preferences?.focusMoodActive || false);
       localStorage.setItem('focusmate_token', res.data.token);
       localStorage.setItem('focusmate_user', JSON.stringify(res.data.user));
     }
@@ -56,7 +62,6 @@ export const AuthProvider = ({ children }) => {
     if (res.data.success) {
       setUser(res.data.user);
       setToken(res.data.token);
-      setFocusMood(res.data.user?.preferences?.focusMoodActive || false);
       localStorage.setItem('focusmate_token', res.data.token);
       localStorage.setItem('focusmate_user', JSON.stringify(res.data.user));
     }
@@ -96,13 +101,48 @@ export const AuthProvider = ({ children }) => {
     return res.data;
   };
 
-  const toggleFocusMood = async () => {
-    const nextState = !focusMood;
-    setFocusMood(nextState);
+  // Launch Full-Screen Lockdown Focus Mode from ANYWHERE
+  const startFullFocusMode = (params = {}) => {
+    const config = {
+      targetMinutes: params.targetMinutes || user?.preferences?.focusDuration || 25,
+      taskTitle: params.taskTitle || '',
+      subjectName: params.subjectName || 'Academic Focus',
+      subjectId: params.subjectId || null,
+      taskId: params.taskId || null,
+      startedAt: new Date(),
+    };
+
+    setFocusSessionConfig(config);
+    setFocusMood(true);
+
+    // Request browser full screen for true distraction-free lock
     try {
-      await updatePreferences({ focusMoodActive: nextState });
+      if (document.documentElement.requestFullscreen && !document.fullscreenElement) {
+        document.documentElement.requestFullscreen().catch(() => {});
+      }
     } catch (e) {
-      console.error('Failed to sync focus mood', e);
+      // Fullscreen policy fallback
+    }
+  };
+
+  // Stop Full-Screen Focus Mode & exit full screen
+  const stopFullFocusMode = () => {
+    setFocusMood(false);
+
+    try {
+      if (document.exitFullscreen && document.fullscreenElement) {
+        document.exitFullscreen().catch(() => {});
+      }
+    } catch (e) {
+      // Exit policy fallback
+    }
+  };
+
+  const toggleFocusMood = () => {
+    if (focusMood) {
+      stopFullFocusMode();
+    } else {
+      startFullFocusMode();
     }
   };
 
@@ -119,6 +159,9 @@ export const AuthProvider = ({ children }) => {
         updatePreferences,
         updateProfile,
         focusMood,
+        focusSessionConfig,
+        startFullFocusMode,
+        stopFullFocusMode,
         toggleFocusMood,
       }}
     >

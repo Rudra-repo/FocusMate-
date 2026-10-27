@@ -8,11 +8,13 @@ import { PomodoroCard } from '../components/dashboard/PomodoroCard';
 import { FlowerCelebrationModal } from '../components/layout/FlowerCelebrationModal';
 import { ExamAlertsBanner } from '../components/dashboard/ExamAlertsBanner';
 import { AiPlannerModal } from '../components/dashboard/AiPlannerModal';
+import { useAuth } from '../context/AuthContext';
 import { Sparkles, Brain, ArrowRight, Zap, Target } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
 
 export const DashboardPage = () => {
+  const { startFullFocusMode } = useAuth();
   const [dashboardData, setDashboardData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [celebration, setCelebration] = useState({ isOpen: false, minutes: 25, taskTitle: '' });
@@ -111,7 +113,13 @@ export const DashboardPage = () => {
           <WelcomeBanner
             greeting={greeting}
             user={user}
-            onReadyClick={() => navigate('/focus')}
+            onReadyClick={() =>
+              startFullFocusMode({
+                targetMinutes: 25,
+                taskTitle: todayTasks[0]?.title || '',
+                subjectName: todayTasks[0]?.subject?.name || 'Academic Focus',
+              })
+            }
           />
 
           {/* Middle Row: Weekly Productivity Analysis & Task Performance */}

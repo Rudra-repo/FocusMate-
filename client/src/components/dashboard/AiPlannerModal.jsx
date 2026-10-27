@@ -13,9 +13,11 @@ import {
   BookOpen,
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../../context/AuthContext';
 import api from '../../services/api';
 
 export const AiPlannerModal = ({ isOpen, onClose }) => {
+  const { startFullFocusMode } = useAuth();
   const [activeTab, setActiveTab] = useState('today'); // 'today', 'tomorrow', 'exams'
   const [scheduleData, setScheduleData] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -48,11 +50,11 @@ export const AiPlannerModal = ({ isOpen, onClose }) => {
 
   const handleStartBlock = (block) => {
     onClose();
-    navigate('/focus', {
-      state: {
-        taskId: block.taskId,
-        taskTitle: block.title,
-      },
+    startFullFocusMode({
+      targetMinutes: block.estimatedMinutes || 25,
+      taskTitle: block.title,
+      subjectName: block.subject?.name || 'Academic Focus',
+      taskId: block.taskId,
     });
   };
 

@@ -15,21 +15,26 @@ import {
   Lock,
   Unlock,
   Radio,
+  BookOpen,
+  RotateCcw,
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
+import { FlowerCelebrationModal } from './FlowerCelebrationModal';
+import api from '../../services/api';
 
 export const FocusMoodOverlay = () => {
-  const { user, focusMood, toggleFocusMood, updatePreferences } = useAuth();
+  const { user, focusMood, stopFullFocusMode, focusSessionConfig = {}, updatePreferences } = useAuth();
 
-  // Full focus countdown state
-  const [secondsRemaining, setSecondsRemaining] = useState(25 * 60);
+  const targetMinutes = focusSessionConfig.targetMinutes || 25;
+  const [secondsRemaining, setSecondsRemaining] = useState(targetMinutes * 60);
   const [isActive, setIsActive] = useState(true);
   const [isPlayingAudio, setIsPlayingAudio] = useState(true);
   const [soundType, setSoundType] = useState('rain'); // 'rain', 'whitenoise'
   const [blockedNotification, setBlockedNotification] = useState(null);
   const [distractionAttempts, setDistractionAttempts] = useState(0);
-  const [newAppName, setNewAppName] = useState('');
-  const [showAddApp, setShowAddApp] = useState(false);
+  const [showExitConfirm, setShowExitConfirm] = useState(false);
+  const [sessionStartTime, setSessionStartTime] = useState(null);
+  const [celebration, setCelebration] = useState({ isOpen: false, minutes: 25, taskTitle: '' });
 
   const audioContextRef = useRef(null);
   const noiseNodeRef = useRef(null);
@@ -106,16 +111,20 @@ export const FocusMoodOverlay = () => {
     setIsPlayingAudio(false);
   };
 
-  // Start sound & timer on enter
+  // On opening focus mode: initialize countdown and ambient audio
   useEffect(() => {
     if (focusMood) {
-      setSecondsRemaining((user?.preferences?.focusDuration || 25) * 60);
+      const initialSeconds = (focusSessionConfig.targetMinutes || 25) * 60;
+      setSecondsRemaining(initialSeconds);
       setIsActive(true);
+      setSessionStartTime(new Date());
+      setDistractionAttempts(0);
+      setShowExitConfirm(false);
       startAudio('rain');
     } else {
       stopAudio();
     }
-  }, [focusMood]);
+  }, [focusMood, focusSessionConfig.targetMinutes]);
 
   // Countdown timer
   useEffect(() => {
@@ -124,6 +133,7 @@ export const FocusMoodOverlay = () => {
         setSecondsRemaining((prev) => {
           if (prev <= 1) {
             clearInterval(timerRef.current);
+            handleCompleteSession(true);
             return 0;
           }
           return prev - 1;
@@ -135,7 +145,36 @@ export const FocusMoodOverlay = () => {
     return () => clearInterval(timerRef.current);
   }, [focusMood, isActive]);
 
-  // Intercept when student leaves the tab or switches app
+  // Record session to backend using real start and end timestamps
+  const handleCompleteSession = async (naturalComplete = false) => {
+    setIsActive(false);
+    const endTime = new Date();
+    const startTime = sessionStartTime || new Date(endTime.getTime() - targetMinutes * 60 * 1000);
+
+    try {
+      await api.post('/focus-sessions', {
+        startedAt: startTime.toISOString(),
+        endedAt: endTime.toISOString(),
+        taskId: focusSessionConfig.taskId || null,
+        subjectId: focusSessionConfig.subjectId || null,
+        sessionType: 'focus',
+        targetMinutes: focusSessionConfig.targetMinutes || 25,
+        notes: focusSessionConfig.taskTitle || `Focus block on ${focusSessionConfig.subjectName || 'Study'}`,
+      });
+
+      if (naturalComplete) {
+        setCelebration({
+          isOpen: true,
+          minutes: focusSessionConfig.targetMinutes || 25,
+          taskTitle: focusSessionConfig.taskTitle || focusSessionConfig.subjectName,
+        });
+      }
+    } catch (err) {
+      console.error('Failed to save focus session:', err);
+    }
+  };
+
+  // Intercept window switch / blur
   useEffect(() => {
     const handleVisibilityChange = () => {
       if (document.hidden && focusMood) {
@@ -143,7 +182,7 @@ export const FocusMoodOverlay = () => {
       } else if (!document.hidden && focusMood) {
         setBlockedNotification({
           title: '⚠️ Window Switch Intercepted',
-          message: 'Focus Lock is strictly active! Distraction window was shielded.',
+          message: 'Focus Lock is strictly active! Stay on FocusMate to maintain your streak.',
         });
         setTimeout(() => setBlockedNotification(null), 4000);
       }
@@ -153,7 +192,6 @@ export const FocusMoodOverlay = () => {
     return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
   }, [focusMood]);
 
-  // Simulate clicking on a blocked distraction
   const handleSimulateOpenApp = (app) => {
     setDistractionAttempts((prev) => prev + 1);
     setBlockedNotification({
@@ -163,173 +201,191 @@ export const FocusMoodOverlay = () => {
     setTimeout(() => setBlockedNotification(null), 4500);
   };
 
-  // Add new app to block list
-  const handleAddNewApp = async (e) => {
-    e.preventDefault();
-    if (!newAppName.trim()) return;
-
-    const newItem = {
-      id: newAppName.toLowerCase().replace(/\s+/g, '-'),
-      name: newAppName.trim(),
-      category: 'Distraction',
-    };
-
-    const updated = [...blockList, newItem];
-    setBlockList(updated);
-    setNewAppName('');
-    setShowAddApp(false);
-    await updatePreferences({ blockedItems: updated });
-  };
-
-  const removeBlockedApp = async (id) => {
-    const updated = blockList.filter((item) => item.id !== id && item._id !== id);
-    setBlockList(updated);
-    await updatePreferences({ blockedItems: updated });
+  const handleExitSession = async () => {
+    await handleCompleteSession(false);
+    stopFullFocusMode();
   };
 
   if (!focusMood) return null;
+
+  const totalSeconds = (focusSessionConfig.targetMinutes || 25) * 60;
+  const progressPercent = Math.min(100, Math.round(((totalSeconds - secondsRemaining) / totalSeconds) * 100));
 
   const mins = Math.floor(secondsRemaining / 60);
   const secs = secondsRemaining % 60;
   const timeFormatted = `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
 
   return (
-    <div className="fixed inset-0 z-50 bg-[#1E1917]/95 backdrop-blur-xl text-white flex flex-col justify-between p-6 md:p-10 animate-in fade-in duration-300 overflow-y-auto">
-      {/* Top Status Bar */}
-      <div className="flex items-center justify-between">
+    <div className="fixed inset-0 z-50 bg-[#161211] text-white flex flex-col justify-between p-6 sm:p-10 select-none overflow-hidden animate-in fade-in duration-300">
+      {/* Background Breathing Glow Radial */}
+      <div className="absolute inset-0 pointer-events-none flex items-center justify-center opacity-30">
+        <div className="w-[500px] h-[500px] rounded-full bg-gradient-to-r from-coral/40 via-sidebarOrange/20 to-transparent blur-3xl animate-pulse" />
+      </div>
+
+      {/* Top Header Bar */}
+      <div className="relative z-10 flex items-center justify-between">
+        {/* Active Task / Course pill */}
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-2xl bg-coral/20 border border-coral text-coral flex items-center justify-center">
-            <Lock className="w-5 h-5 animate-pulse" />
+          <div className="w-10 h-10 rounded-2xl bg-coral/20 border border-coral text-coral flex items-center justify-center shadow-lg">
+            <Lock className="w-5 h-5 animate-pulse text-coral" />
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <span className="text-xs font-bold uppercase tracking-wider text-coral">
-                Strict Focus Lockdown Active
+              <span className="text-[11px] font-extrabold uppercase tracking-widest text-coral">
+                Strict Focus Lockdown
               </span>
               <span className="w-2 h-2 rounded-full bg-successGreen animate-ping" />
             </div>
-            <p className="text-xs text-white/60">
-              All distracting websites and notifications are actively shielded.
-            </p>
+            <h3 className="text-xs sm:text-sm font-bold text-white/90 truncate max-w-xs sm:max-w-md">
+              {focusSessionConfig.taskTitle ? `📖 ${focusSessionConfig.taskTitle}` : `📖 ${focusSessionConfig.subjectName || 'Academic Focus'}`}
+            </h3>
           </div>
         </div>
 
-        {/* Exit Button */}
-        <button
-          onClick={toggleFocusMood}
-          className="px-4 py-2 rounded-2xl bg-white/10 hover:bg-white/20 text-white font-bold text-xs border border-white/15 transition-all flex items-center gap-2"
-        >
-          <Unlock className="w-3.5 h-3.5 text-coral" />
-          <span>Exit Focus Mode</span>
-        </button>
+        {/* Ambient Noise & Exit Controls */}
+        <div className="flex items-center gap-3">
+          <div className="hidden sm:flex items-center gap-2 bg-white/10 backdrop-blur-md px-3 py-1.5 rounded-2xl border border-white/10 text-xs">
+            <button
+              onClick={() => (isPlayingAudio ? stopAudio() : startAudio(soundType))}
+              className="text-coral hover:text-white"
+            >
+              {isPlayingAudio ? <Volume2 className="w-4 h-4 text-coral" /> : <VolumeX className="w-4 h-4 text-white/50" />}
+            </button>
+            <select
+              value={soundType}
+              onChange={(e) => {
+                setSoundType(e.target.value);
+                startAudio(e.target.value);
+              }}
+              className="bg-transparent text-xs font-semibold text-white/90 focus:outline-none cursor-pointer"
+            >
+              <option value="rain" className="bg-[#181413] text-white">Rainfall</option>
+              <option value="whitenoise" className="bg-[#181413] text-white">Brown Noise</option>
+            </select>
+          </div>
+
+          <button
+            onClick={() => setShowExitConfirm(true)}
+            className="px-4 py-2 rounded-2xl bg-white/10 hover:bg-white/20 text-white font-bold text-xs border border-white/15 transition-all flex items-center gap-1.5"
+          >
+            <Unlock className="w-3.5 h-3.5 text-coral" />
+            <span>End Session</span>
+          </button>
+        </div>
       </div>
 
-      {/* Intercept Alert Banner (if distraction attempted) */}
+      {/* Intercept Alert Banner (if user tries to leave or switch) */}
       {blockedNotification && (
-        <div className="max-w-md mx-auto my-3 p-4 rounded-3xl bg-red-950/80 border-2 border-red-500 text-red-200 text-center shadow-2xl animate-in zoom-in-95 duration-150">
-          <ShieldAlert className="w-8 h-8 text-red-400 mx-auto mb-1 animate-bounce" />
+        <div className="relative z-20 max-w-md mx-auto my-2 p-4 rounded-3xl bg-red-950/90 border-2 border-red-500 text-red-200 text-center shadow-2xl animate-in zoom-in-95 duration-150">
+          <ShieldAlert className="w-7 h-7 text-red-400 mx-auto mb-1 animate-bounce" />
           <h4 className="text-sm font-bold text-white">{blockedNotification.title}</h4>
           <p className="text-xs mt-1 text-red-300">{blockedNotification.message}</p>
         </div>
       )}
 
-      {/* Main Centerpiece Countdown */}
-      <div className="flex flex-col items-center justify-center my-6 text-center">
-        <span className="text-xs font-semibold tracking-widest text-coral uppercase mb-2">
-          Deep Focus Session
-        </span>
-        <div className="text-7xl md:text-9xl font-black font-display tracking-tight text-white select-none">
+      {/* Main Focus Center: GIANT TIME DISPLAY */}
+      <div className="relative z-10 flex flex-col items-center justify-center my-auto text-center">
+        {/* Progress indicator */}
+        <div className="mb-4 flex items-center gap-2 text-xs font-bold text-coral bg-coral/10 px-4 py-1 rounded-full border border-coral/20">
+          <span>{progressPercent}% Complete</span>
+          <span>•</span>
+          <span>{mins} mins remaining</span>
+        </div>
+
+        {/* Huge Countdown Digits */}
+        <div className="text-7xl sm:text-9xl md:text-[11rem] lg:text-[13rem] font-black font-display tracking-tight text-white select-none leading-none drop-shadow-2xl">
           {timeFormatted}
         </div>
 
-        {/* Ambient Noise Selector */}
-        <div className="mt-6 flex items-center gap-3 bg-white/10 backdrop-blur-md px-4 py-2 rounded-2xl border border-white/10">
+        {/* Controls: Play/Pause Stepper */}
+        <div className="mt-8 flex items-center gap-4">
           <button
-            onClick={() => (isPlayingAudio ? stopAudio() : startAudio(soundType))}
-            className="text-coral hover:text-white transition-colors"
+            onClick={() => setIsActive(!isActive)}
+            className="w-16 h-16 rounded-full bg-coral hover:bg-coral-dark text-white flex items-center justify-center shadow-glow-coral transition-all hover:scale-105 active:scale-95"
+            title={isActive ? 'Pause Timer' : 'Resume Timer'}
           >
-            {isPlayingAudio ? <Volume2 className="w-5 h-5" /> : <VolumeX className="w-5 h-5 text-white/50" />}
+            {isActive ? (
+              <Pause className="w-7 h-7 fill-white" />
+            ) : (
+              <Play className="w-7 h-7 fill-white ml-1" />
+            )}
           </button>
-          <span className="text-xs font-semibold text-white/80">Ambient Frequency:</span>
-          <select
-            value={soundType}
-            onChange={(e) => {
-              setSoundType(e.target.value);
-              startAudio(e.target.value);
-            }}
-            className="bg-transparent text-xs font-bold text-coral focus:outline-none cursor-pointer"
+
+          <button
+            onClick={() => handleCompleteSession(true)}
+            className="px-5 py-3 rounded-full bg-white/10 hover:bg-white/20 text-white font-bold text-xs border border-white/15 transition-all flex items-center gap-2"
           >
-            <option value="rain" className="bg-[#1E1917] text-white">Rainfall</option>
-            <option value="whitenoise" className="bg-[#1E1917] text-white">Brown Noise</option>
-          </select>
+            <CheckCircle2 className="w-4 h-4 text-successGreen" />
+            <span>Mark Complete</span>
+          </button>
         </div>
 
         {distractionAttempts > 0 && (
-          <span className="mt-3 text-xs text-amber-400 font-semibold bg-amber-950/50 px-3 py-1 rounded-full border border-amber-800">
+          <span className="mt-4 text-xs text-amber-400 font-semibold bg-amber-950/60 px-3.5 py-1 rounded-full border border-amber-800 animate-pulse">
             ⚠️ {distractionAttempts} distraction attempts shielded
           </span>
         )}
       </div>
 
-      {/* Bottom Blocked Apps Interceptor Panel */}
-      <div className="bg-white/10 backdrop-blur-md rounded-3xl p-5 border border-white/10 max-w-4xl mx-auto w-full">
-        <div className="flex items-center justify-between mb-3">
-          <div className="flex items-center gap-2">
-            <Shield className="w-4 h-4 text-successGreen" />
-            <span className="text-xs font-bold text-white tracking-wide">
-              Shielded Distractions ({blockList.length} Apps Blocked)
-            </span>
-          </div>
-
-          <button
-            onClick={() => setShowAddApp(!showAddApp)}
-            className="text-xs font-bold text-coral hover:text-white flex items-center gap-1 bg-coral/20 px-3 py-1 rounded-xl border border-coral/30"
-          >
-            <Plus className="w-3.5 h-3.5" />
-            <span>Block Another App/Site</span>
-          </button>
+      {/* Bottom Distraction Shield Bar */}
+      <div className="relative z-10 max-w-3xl mx-auto w-full bg-white/5 backdrop-blur-md rounded-3xl p-4 border border-white/10 flex items-center justify-between gap-4 flex-wrap">
+        <div className="flex items-center gap-2">
+          <Shield className="w-4 h-4 text-successGreen" />
+          <span className="text-xs font-bold text-white/90">
+            {blockList.length} Distracting Apps Shielded:
+          </span>
         </div>
 
-        {/* Add app inline form */}
-        {showAddApp && (
-          <form onSubmit={handleAddNewApp} className="mb-3 flex items-center gap-2">
-            <input
-              type="text"
-              placeholder="e.g. Netflix, Discord, Reddit, TikTok..."
-              value={newAppName}
-              onChange={(e) => setNewAppName(e.target.value)}
-              className="flex-1 text-xs px-3 py-2 rounded-xl bg-white/20 border border-white/20 text-white placeholder-white/40 focus:outline-none focus:border-coral"
-              autoFocus
-            />
-            <button
-              type="submit"
-              className="text-xs font-bold px-4 py-2 rounded-xl bg-coral hover:bg-coral-dark text-white"
-            >
-              Add to Block List
-            </button>
-          </form>
-        )}
-
-        {/* Interactive App Badges */}
-        <div className="flex items-center gap-3 flex-wrap">
+        <div className="flex items-center gap-2 flex-wrap">
           {blockList.map((app) => (
-            <div
+            <span
               key={app.id || app._id}
               onClick={() => handleSimulateOpenApp(app)}
-              className="group flex items-center gap-2 bg-white/10 hover:bg-red-500/20 px-3 py-2 rounded-2xl border border-white/10 hover:border-red-400 cursor-pointer transition-all"
-              title={`Click to test blocking ${app.name}`}
+              className="text-[11px] font-semibold text-white/80 bg-white/10 hover:bg-red-500/20 hover:text-red-300 px-2.5 py-1 rounded-xl border border-white/10 cursor-pointer transition-all"
+              title={`Simulate blocking ${app.name}`}
             >
-              <div className="w-2 h-2 rounded-full bg-red-400 animate-pulse" />
-              <span className="text-xs font-bold text-white group-hover:text-red-200">
-                {app.name}
-              </span>
-              <span className="text-[10px] text-white/50 bg-white/10 px-1.5 py-0.5 rounded-md">
-                Locked
-              </span>
-            </div>
+              🔒 {app.name}
+            </span>
           ))}
         </div>
       </div>
+
+      {/* Exit Confirmation Dialog */}
+      {showExitConfirm && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-[#1F1A18] rounded-3xl p-6 max-w-sm w-full text-center border-2 border-peach-200/20 shadow-2xl animate-in zoom-in-95 duration-150">
+            <h4 className="text-base font-bold text-white mb-2">End Focus Session Early?</h4>
+            <p className="text-xs text-white/60 mb-6">
+              You still have {mins} minutes remaining in your study block. Exiting early will stop your continuous focus streak.
+            </p>
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => setShowExitConfirm(false)}
+                className="flex-1 py-2.5 rounded-xl bg-coral hover:bg-coral-dark text-white font-bold text-xs"
+              >
+                Keep Focusing
+              </button>
+              <button
+                onClick={handleExitSession}
+                className="flex-1 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-white font-bold text-xs border border-white/15"
+              >
+                End & Unlock
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Flower Celebration Modal on Complete */}
+      <FlowerCelebrationModal
+        isOpen={celebration.isOpen}
+        minutes={celebration.minutes}
+        taskTitle={celebration.taskTitle}
+        onClose={() => {
+          setCelebration({ isOpen: false, minutes: 25, taskTitle: '' });
+          stopFullFocusMode();
+        }}
+      />
     </div>
   );
 };

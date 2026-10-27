@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { Brain, Sparkles, Clock, AlertTriangle, ArrowRight, BookOpen, CheckCircle, Zap, Info } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 import { AiPlannerModal } from '../components/dashboard/AiPlannerModal';
 import api from '../services/api';
 
 export const PlanPage = () => {
+  const { startFullFocusMode } = useAuth();
   const [recommendations, setRecommendations] = useState([]);
   const [loading, setLoading] = useState(true);
   const [formulaInfoOpen, setFormulaInfoOpen] = useState(true);
@@ -29,13 +31,12 @@ export const PlanPage = () => {
   }, []);
 
   const handleStartFocus = (rec) => {
-    navigate('/focus', {
-      state: {
-        taskId: rec.taskId,
-        subjectId: rec.subjectId,
-        topicName: rec.topicName,
-        taskTitle: rec.title,
-      },
+    startFullFocusMode({
+      targetMinutes: rec.recommendedMinutes || 25,
+      taskId: rec.taskId,
+      subjectId: rec.subjectId,
+      taskTitle: rec.title,
+      subjectName: rec.subjectName,
     });
   };
 

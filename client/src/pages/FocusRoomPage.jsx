@@ -15,9 +15,11 @@ import {
   BookOpen,
 } from 'lucide-react';
 import { FlowerCelebrationModal } from '../components/layout/FlowerCelebrationModal';
+import { useAuth } from '../context/AuthContext';
 import api from '../services/api';
 
 export const FocusRoomPage = () => {
+  const { startFullFocusMode } = useAuth();
   const location = useLocation();
   const preselected = location.state || {};
 
@@ -93,10 +95,15 @@ export const FocusRoomPage = () => {
   };
 
   const handleStart = () => {
-    if (!sessionStartTime) {
-      setSessionStartTime(new Date());
-    }
-    setIsActive(true);
+    const taskObj = tasks.find((t) => t._id === selectedTaskId);
+    const subObj = subjects.find((s) => s._id === selectedSubjectId);
+    startFullFocusMode({
+      targetMinutes,
+      taskTitle: taskObj?.title || '',
+      subjectName: subObj?.name || 'General Study',
+      subjectId: selectedSubjectId || null,
+      taskId: selectedTaskId || null,
+    });
   };
 
   const handlePause = () => {
