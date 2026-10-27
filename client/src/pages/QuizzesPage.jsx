@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { HelpCircle, Clock, CheckCircle2, XCircle, ArrowRight, RotateCcw, Award, ChevronRight, Zap } from 'lucide-react';
+import { HelpCircle, Clock, CheckCircle2, XCircle, ArrowRight, RotateCcw, Award, ChevronRight, Zap, Sparkles } from 'lucide-react';
 import api from '../services/api';
+import { AiQuizModal } from '../components/quizzes/AiQuizModal';
 
 export const QuizzesPage = () => {
   const [quizzes, setQuizzes] = useState([]);
@@ -12,6 +13,7 @@ export const QuizzesPage = () => {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('bank'); // 'bank' or 'attempts'
   const [timeSpent, setTimeSpent] = useState(0);
+  const [isAiModalOpen, setIsAiModalOpen] = useState(false);
 
   const fetchQuizzes = async () => {
     try {
@@ -99,6 +101,11 @@ export const QuizzesPage = () => {
     setTimeSpent(0);
   };
 
+  const handleQuizGenerated = (newQuiz) => {
+    setQuizzes((prev) => [newQuiz, ...prev]);
+    handleStartQuiz(newQuiz);
+  };
+
   return (
     <div className="space-y-6 pb-12">
       {/* Header Bar */}
@@ -112,26 +119,43 @@ export const QuizzesPage = () => {
           </p>
         </div>
 
-        {/* Tab switch */}
-        <div className="flex items-center gap-1 bg-white/80 p-1 rounded-2xl border border-peach-200">
+        {/* Action & Tab switch */}
+        <div className="flex items-center gap-3 flex-wrap">
           <button
-            onClick={() => setActiveTab('bank')}
-            className={`px-4 py-1.5 rounded-xl text-xs font-bold transition-all ${
-              activeTab === 'bank' ? 'bg-coral text-white shadow-sm' : 'text-mainText-muted'
-            }`}
+            onClick={() => setIsAiModalOpen(true)}
+            className="px-4 py-2 rounded-2xl bg-coral hover:bg-coral-dark text-white font-bold text-xs shadow-soft-peach flex items-center gap-1.5 transition-all hover:scale-105 active:scale-95"
           >
-            Quiz Bank
+            <Sparkles className="w-3.5 h-3.5 fill-white" />
+            <span>Generate Quiz with AI</span>
           </button>
-          <button
-            onClick={() => setActiveTab('attempts')}
-            className={`px-4 py-1.5 rounded-xl text-xs font-bold transition-all ${
-              activeTab === 'attempts' ? 'bg-coral text-white shadow-sm' : 'text-mainText-muted'
-            }`}
-          >
-            Attempt History
-          </button>
+
+          <div className="flex items-center gap-1 bg-white/80 p-1 rounded-2xl border border-peach-200">
+            <button
+              onClick={() => setActiveTab('bank')}
+              className={`px-4 py-1.5 rounded-xl text-xs font-bold transition-all ${
+                activeTab === 'bank' ? 'bg-coral text-white shadow-sm' : 'text-mainText-muted'
+              }`}
+            >
+              Quiz Bank
+            </button>
+            <button
+              onClick={() => setActiveTab('attempts')}
+              className={`px-4 py-1.5 rounded-xl text-xs font-bold transition-all ${
+                activeTab === 'attempts' ? 'bg-coral text-white shadow-sm' : 'text-mainText-muted'
+              }`}
+            >
+              Attempt History
+            </button>
+          </div>
         </div>
       </div>
+
+      {/* AI Quiz Generator Modal */}
+      <AiQuizModal
+        isOpen={isAiModalOpen}
+        onClose={() => setIsAiModalOpen(false)}
+        onQuizGenerated={handleQuizGenerated}
+      />
 
       {/* Quiz Runner Modal / Active View */}
       {activeQuiz && (

@@ -51,6 +51,25 @@ exports.createTopic = async (req, res, next) => {
   }
 };
 
+exports.getTopicById = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const userId = req.user.id;
+
+    const topic = await Topic.findOne({ _id: id, userId }).populate('subjectId', 'name color code');
+    if (!topic) {
+      return res.status(404).json({ success: false, message: 'Topic not found or unauthorized' });
+    }
+
+    res.status(200).json({
+      success: true,
+      topic,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 exports.updateTopic = async (req, res, next) => {
   try {
     const { id } = req.params;

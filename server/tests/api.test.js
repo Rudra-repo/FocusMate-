@@ -6,6 +6,7 @@ const Task = require('../src/models/Task');
 const Subject = require('../src/models/Subject');
 const Quiz = require('../src/models/Quiz');
 const QuizAttempt = require('../src/models/QuizAttempt');
+const Topic = require('../src/models/Topic');
 const timerService = require('../src/services/timerService');
 const adaptivePlannerService = require('../src/services/adaptivePlannerService');
 
@@ -113,5 +114,78 @@ describe('FocusMate Core Services & Business Logic Tests', () => {
 
     const isSecondCorrect = answers[1].selectedOption === quiz.questions[1].correctOptionIndex;
     assert.strictEqual(isSecondCorrect, false);
+  });
+
+  test('6. Topic Model supports Markdown study notes and polymorphic resources (drive, pdf, image, link)', async () => {
+    let topic = await Topic.findOne({ userId: testUser._id });
+    if (!topic) {
+      topic = await Topic.create({
+        userId: testUser._id,
+        subjectId: testSubject._id,
+        name: 'Automated Test Topic',
+      });
+    }
+
+    topic.notes = '### Key Formula\n$$\\text{Det}(A - \\lambda I) = 0$$\n* Step 1: Compute matrix.';
+    topic.resources = [
+      {
+        title: 'Midterm Revision Drive Folder',
+        url: 'https://drive.google.com/drive/folders/sample-test',
+        resourceType: 'drive',
+      },
+      {
+        title: 'Lecture Slides PDF',
+        url: 'https://example.com/slides.pdf',
+        resourceType: 'pdf',
+      },
+      {
+        title: 'Whiteboard Diagram Photo',
+        url: 'https://example.com/diagram.png',
+        resourceType: 'image',
+      },
+    ];
+
+    await topic.save();
+
+    const retrieved = await Topic.findById(topic._id);
+    assert.ok(retrieved.notes.includes('Key Formula'));
+    assert.strictEqual(retrieved.resources.length, 3);
+    assert.strictEqual(retrieved.resources[0].resourceType, 'drive');
+    assert.strictEqual(retrieved.resources[1].resourceType, 'pdf');
+    assert.strictEqual(retrieved.resources[2].resourceType, 'image');
+  });
+
+  test('7. AI Quiz Generation creates diagnostic MCQs with correct options and server explanations', async () => {
+    const aiController = require('../src/controllers/aiController');
+    let capturedResult = null;
+
+    const mockReq = {
+      user: { id: testUser._id },
+      body: {
+        topicName: 'B-Tree & Hash Indexing',
+        subjectId: testSubject._id,
+        difficulty: 'hard',
+      },
+    };
+
+    const mockRes = {
+      status(code) {
+        this.statusCode = code;
+        return this;
+      },
+      json(data) {
+        capturedResult = data;
+        return this;
+      },
+    };
+
+    await aiController.generateQuizForTopic(mockReq, mockRes, (err) => {
+      if (err) throw err;
+    });
+
+    assert.strictEqual(mockRes.statusCode, 201);
+    assert.strictEqual(capturedResult.success, true);
+    assert.ok(capturedResult.quiz, 'Should return generated quiz');
+    assert.ok(capturedResult.quiz.questionsCount >= 2, 'Should generate multiple questions');
   });
 });

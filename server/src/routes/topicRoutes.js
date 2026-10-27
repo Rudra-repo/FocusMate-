@@ -10,6 +10,7 @@ router.route('/')
   .post(topicController.createTopic);
 
 router.route('/:id')
+  .get(topicController.getTopicById)
   .patch(topicController.updateTopic)
   .delete(topicController.deleteTopic);
 

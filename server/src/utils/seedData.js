@@ -129,6 +129,23 @@ const seed = async () => {
         quizAccuracy: 45,
         totalQuizAttempts: 2,
         timeSpentMinutes: 90,
+        resources: [
+          {
+            title: 'Unit 3 Lecture Slides & Midterm Revision',
+            url: 'https://drive.google.com/drive/folders/1aBcDeFgHiJkLmNoPqRsTuVwXyZ',
+            resourceType: 'drive',
+          },
+          {
+            title: 'SQL Joins Visual Venn Diagram & Cheat Sheet',
+            url: 'https://images.unsplash.com/photo-1544383835-bda2bc66a55d?w=800',
+            resourceType: 'image',
+          },
+          {
+            title: 'Prof. Rao DBMS Problem Set PDF',
+            url: 'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf',
+            resourceType: 'pdf',
+          },
+        ],
       },
       {
         userId: user._id,
@@ -163,6 +180,18 @@ const seed = async () => {
         quizAccuracy: 65,
         totalQuizAttempts: 2,
         timeSpentMinutes: 140,
+        resources: [
+          {
+            title: 'AVL Rotations & Balance Factors Diagram',
+            url: 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=800',
+            resourceType: 'image',
+          },
+          {
+            title: 'DSA Lecture Notes Google Drive Folder',
+            url: 'https://drive.google.com/drive/folders/dsa-lecture-notes',
+            resourceType: 'drive',
+          },
+        ],
       },
       {
         userId: user._id,

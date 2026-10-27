@@ -38,6 +38,11 @@ const topicSchema = new mongoose.Schema(
       {
         title: String,
         url: String,
+        resourceType: {
+          type: String,
+          enum: ['drive', 'pdf', 'image', 'link'],
+          default: 'link',
+        },
       },
     ],
     timeSpentMinutes: {

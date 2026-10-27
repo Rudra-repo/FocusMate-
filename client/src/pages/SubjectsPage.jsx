@@ -1,15 +1,42 @@
 import React, { useState, useEffect } from 'react';
-import { BookOpen, Plus, Sparkles, CheckCircle2, Clock, HelpCircle, Edit3, Trash2, X, ChevronRight } from 'lucide-react';
+import {
+  BookOpen,
+  Plus,
+  Sparkles,
+  CheckCircle2,
+  Clock,
+  HelpCircle,
+  Edit3,
+  Trash2,
+  X,
+  ChevronRight,
+  Folder,
+  FileText,
+  Lock,
+} from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
+import { useAuth } from '../context/AuthContext';
+import { TopicStudyMaterialsModal } from '../components/subjects/TopicStudyMaterialsModal';
+import { AiQuizModal } from '../components/quizzes/AiQuizModal';
 
 export const SubjectsPage = () => {
+  const { startFullFocusMode } = useAuth();
   const [subjects, setSubjects] = useState([]);
   const [selectedSubject, setSelectedSubject] = useState(null);
   const [topics, setTopics] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isAddSubjectOpen, setIsAddSubjectOpen] = useState(false);
   const [isAddTopicOpen, setIsAddTopicOpen] = useState(false);
+
+  // Topic materials modal state
+  const [selectedTopicForModal, setSelectedTopicForModal] = useState(null);
+
+  // AI Quiz modal state
+  const [isAiQuizOpen, setIsAiQuizOpen] = useState(false);
+  const [aiQuizTopic, setAiQuizTopic] = useState('');
+  const [aiQuizSubjectId, setAiQuizSubjectId] = useState('');
+
   const navigate = useNavigate();
 
   // New subject form
@@ -260,11 +287,13 @@ export const SubjectsPage = () => {
                   topics.map((t) => (
                     <div
                       key={t._id}
-                      className="p-4 rounded-2xl bg-peach-50/40 border border-peach-200/70 hover:bg-peach-50/80 transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-3"
+                      className="p-4 rounded-2xl bg-peach-50/40 border border-peach-200/70 hover:bg-peach-50/80 transition-all flex flex-col md:flex-row md:items-center justify-between gap-3 group"
                     >
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2">
-                          <h5 className="text-sm font-bold text-mainText">{t.name}</h5>
+                      <div className="flex-1 cursor-pointer" onClick={() => setSelectedTopicForModal(t)}>
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <h5 className="text-sm font-bold text-mainText group-hover:text-coral transition-colors">
+                            {t.name}
+                          </h5>
                           {getMasteryBadge(t.masteryLevel)}
                           {t.quizAccuracy !== null && t.quizAccuracy !== undefined && (
                             <span className="text-[10px] font-bold text-coral-dark bg-white px-2 py-0.5 rounded-full border border-peach-200">
@@ -274,41 +303,92 @@ export const SubjectsPage = () => {
                         </div>
 
                         {t.notes && (
-                          <p className="text-xs text-mainText-muted mt-1 line-clamp-2">
+                          <p className="text-xs text-mainText-muted mt-1 line-clamp-1">
                             {t.notes}
                           </p>
                         )}
 
-                        <div className="flex items-center gap-3 mt-2 text-[11px] text-mainText-muted">
+                        <div className="flex items-center gap-2 mt-2 flex-wrap text-[11px] text-mainText-muted">
+                          {t.resources?.length > 0 && (
+                            <span className="text-[10px] font-bold text-coral bg-white px-2 py-0.5 rounded-full border border-peach-200 flex items-center gap-1 shadow-2xs">
+                              <Folder className="w-3 h-3 text-coral" />
+                              {t.resources.length} materials
+                            </span>
+                          )}
+                          {t.notes && (
+                            <span className="text-[10px] font-bold text-amber-700 bg-white px-2 py-0.5 rounded-full border border-peach-200 flex items-center gap-1 shadow-2xs">
+                              <FileText className="w-3 h-3 text-amber-500" />
+                              Notes
+                            </span>
+                          )}
                           <span className="flex items-center gap-1">
                             <Clock className="w-3 h-3 text-coral" />
-                            {t.timeSpentMinutes || 0} mins logged
+                            {t.timeSpentMinutes || 0}m
                           </span>
                           <span>•</span>
-                          <span className="capitalize">{t.difficulty} difficulty</span>
+                          <span className="capitalize">{t.difficulty}</span>
                         </div>
                       </div>
 
-                      {/* Action selector */}
-                      <div className="flex items-center gap-2 shrink-0">
+                      {/* Action buttons */}
+                      <div className="flex items-center gap-1.5 shrink-0 flex-wrap">
+                        {/* Open Notes & Materials Hub */}
+                        <button
+                          type="button"
+                          onClick={() => setSelectedTopicForModal(t)}
+                          className="px-2.5 py-1.5 rounded-xl bg-white hover:bg-peach-100 text-mainText border border-peach-200 text-xs font-bold transition-all flex items-center gap-1 shadow-2xs"
+                          title="Open Study Notes, Drive Links & Photos"
+                        >
+                          <Folder className="w-3.5 h-3.5 text-coral" />
+                          <span>Materials</span>
+                        </button>
+
+                        {/* Direct Focus Mode */}
+                        <button
+                          type="button"
+                          onClick={() => {
+                            startFullFocusMode({
+                              targetMinutes: 25,
+                              topicId: t._id,
+                              topicName: t.name,
+                              subjectId: selectedSubject._id,
+                              subjectName: selectedSubject.name,
+                              notes: t.notes,
+                              resources: t.resources,
+                            });
+                          }}
+                          className="px-2.5 py-1.5 rounded-xl bg-coral/10 hover:bg-coral text-coral hover:text-white border border-coral/30 text-xs font-bold transition-all flex items-center gap-1"
+                          title="Start 25m Focus Block with these topic notes"
+                        >
+                          <Lock className="w-3.5 h-3.5" />
+                          <span>Focus</span>
+                        </button>
+
+                        {/* AI Quiz Button */}
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setAiQuizTopic(t.name);
+                            setAiQuizSubjectId(selectedSubject._id);
+                            setIsAiQuizOpen(true);
+                          }}
+                          className="p-1.5 rounded-xl bg-peach-50 text-coral hover:bg-coral hover:text-white border border-peach-200 transition-colors"
+                          title="Generate AI Quiz on this topic"
+                        >
+                          <Sparkles className="w-3.5 h-3.5" />
+                        </button>
+
+                        {/* Mastery selector */}
                         <select
                           value={t.masteryLevel}
                           onChange={(e) => handleUpdateMastery(t._id, e.target.value)}
-                          className="text-xs font-semibold py-1.5 px-2.5 rounded-xl border border-peach-300 bg-white text-mainText focus:outline-none focus:border-coral"
+                          className="text-xs font-semibold py-1 px-2 rounded-xl border border-peach-300 bg-white text-mainText focus:outline-none focus:border-coral"
                         >
                           <option value="not_started">Not Started</option>
                           <option value="learning">Learning</option>
                           <option value="revision">Needs Revision</option>
                           <option value="mastered">Mastered</option>
                         </select>
-
-                        <button
-                          onClick={() => navigate('/quizzes')}
-                          className="p-1.5 rounded-xl bg-white border border-peach-200 text-coral hover:bg-coral hover:text-white transition-colors"
-                          title="Take Quiz on this topic"
-                        >
-                          <HelpCircle className="w-4 h-4" />
-                        </button>
                       </div>
                     </div>
                   ))
@@ -479,6 +559,34 @@ export const SubjectsPage = () => {
           </div>
         </div>
       )}
+
+      {/* Topic Study Materials & Notes Modal */}
+      <TopicStudyMaterialsModal
+        isOpen={!!selectedTopicForModal}
+        onClose={() => setSelectedTopicForModal(null)}
+        topic={selectedTopicForModal}
+        subject={selectedSubject}
+        onTopicUpdated={(updated) => {
+          setTopics((prev) => prev.map((t) => (t._id === updated._id ? updated : t)));
+          setSelectedTopicForModal(updated);
+        }}
+        onOpenAiQuiz={(topName, subId) => {
+          setAiQuizTopic(topName);
+          setAiQuizSubjectId(subId);
+          setIsAiQuizOpen(true);
+        }}
+      />
+
+      {/* AI Quiz Generator Modal */}
+      <AiQuizModal
+        isOpen={isAiQuizOpen}
+        onClose={() => setIsAiQuizOpen(false)}
+        initialTopic={aiQuizTopic}
+        initialSubjectId={aiQuizSubjectId}
+        onQuizGenerated={(newQuiz) => {
+          navigate('/quizzes');
+        }}
+      />
     </div>
   );
 };

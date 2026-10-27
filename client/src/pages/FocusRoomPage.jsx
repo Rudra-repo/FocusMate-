@@ -25,8 +25,10 @@ export const FocusRoomPage = () => {
 
   const [subjects, setSubjects] = useState([]);
   const [tasks, setTasks] = useState([]);
+  const [topics, setTopics] = useState([]);
   const [selectedSubjectId, setSelectedSubjectId] = useState(preselected.subjectId || '');
   const [selectedTaskId, setSelectedTaskId] = useState(preselected.taskId || '');
+  const [selectedTopicId, setSelectedTopicId] = useState(preselected.topicId || '');
   const [mode, setMode] = useState('focus'); // 'focus', 'short_break', 'long_break'
 
   const [targetMinutes, setTargetMinutes] = useState(25);
@@ -67,6 +69,25 @@ export const FocusRoomPage = () => {
     fetchData();
   }, []);
 
+  // Fetch topics whenever selectedSubjectId changes
+  useEffect(() => {
+    if (!selectedSubjectId) {
+      setTopics([]);
+      return;
+    }
+    api
+      .get('/topics', { params: { subjectId: selectedSubjectId } })
+      .then((res) => {
+        if (res.data.success && res.data.topics) {
+          setTopics(res.data.topics);
+          if (res.data.topics.length > 0 && !selectedTopicId) {
+            setSelectedTopicId(res.data.topics[0]._id);
+          }
+        }
+      })
+      .catch((err) => console.error('Failed to load subject topics:', err));
+  }, [selectedSubjectId]);
+
   // Timer interval
   useEffect(() => {
     if (isActive) {
@@ -97,12 +118,17 @@ export const FocusRoomPage = () => {
   const handleStart = () => {
     const taskObj = tasks.find((t) => t._id === selectedTaskId);
     const subObj = subjects.find((s) => s._id === selectedSubjectId);
+    const topicObj = topics.find((t) => t._id === selectedTopicId);
     startFullFocusMode({
       targetMinutes,
-      taskTitle: taskObj?.title || '',
+      taskTitle: taskObj?.title || (topicObj ? topicObj.name : ''),
       subjectName: subObj?.name || 'General Study',
       subjectId: selectedSubjectId || null,
       taskId: selectedTaskId || null,
+      topicId: selectedTopicId || null,
+      topicName: topicObj?.name || '',
+      notes: topicObj?.notes || '',
+      resources: topicObj?.resources || [],
     });
   };
 
@@ -320,6 +346,22 @@ export const FocusRoomPage = () => {
               </option>
             ))}
           </select>
+
+          {topics.length > 0 && (
+            <select
+              value={selectedTopicId}
+              onChange={(e) => setSelectedTopicId(e.target.value)}
+              disabled={isActive}
+              className="text-xs font-semibold px-3 py-1.5 rounded-xl border border-peach-200 bg-peach-50/50 text-mainText focus:outline-none max-w-xs truncate"
+            >
+              <option value="">Choose Topic (Notes & Drive)</option>
+              {topics.map((top) => (
+                <option key={top._id} value={top._id}>
+                  Topic: {top.name}
+                </option>
+              ))}
+            </select>
+          )}
         </div>
 
         {/* Large Progress Ring Timer */}

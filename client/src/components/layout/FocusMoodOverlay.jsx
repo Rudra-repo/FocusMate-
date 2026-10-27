@@ -20,6 +20,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { FlowerCelebrationModal } from './FlowerCelebrationModal';
+import { FocusNotesDrawer } from './FocusNotesDrawer';
 import api from '../../services/api';
 
 export const FocusMoodOverlay = () => {
@@ -35,10 +36,12 @@ export const FocusMoodOverlay = () => {
   const [showExitConfirm, setShowExitConfirm] = useState(false);
   const [sessionStartTime, setSessionStartTime] = useState(null);
   const [celebration, setCelebration] = useState({ isOpen: false, minutes: 25, taskTitle: '' });
+  const [isNotesDrawerOpen, setIsNotesDrawerOpen] = useState(false);
 
   const audioContextRef = useRef(null);
   const noiseNodeRef = useRef(null);
   const timerRef = useRef(null);
+  const isViewingStudyResourceRef = useRef(false);
 
   const defaultBlockedApps = user?.preferences?.blockedItems || [
     { id: 'telegram', name: 'Telegram', category: 'Chat' },
@@ -174,17 +177,39 @@ export const FocusMoodOverlay = () => {
     }
   };
 
+  const handleOpenStudyResource = (resource) => {
+    isViewingStudyResourceRef.current = true;
+    setBlockedNotification({
+      title: `📖 Opened Academic Resource: ${resource.title}`,
+      message: 'Authorized study material. Pomodoro timer remains active!',
+    });
+    setTimeout(() => {
+      isViewingStudyResourceRef.current = false;
+      setBlockedNotification(null);
+    }, 25000);
+  };
+
   // Intercept window switch / blur
   useEffect(() => {
     const handleVisibilityChange = () => {
       if (document.hidden && focusMood) {
-        setDistractionAttempts((prev) => prev + 1);
+        if (!isViewingStudyResourceRef.current) {
+          setDistractionAttempts((prev) => prev + 1);
+        }
       } else if (!document.hidden && focusMood) {
-        setBlockedNotification({
-          title: '⚠️ Window Switch Intercepted',
-          message: 'Focus Lock is strictly active! Stay on FocusMate to maintain your streak.',
-        });
-        setTimeout(() => setBlockedNotification(null), 4000);
+        if (isViewingStudyResourceRef.current) {
+          setBlockedNotification({
+            title: '📖 Welcome Back from Topic Reference',
+            message: 'Academic study material referenced. Streak maintained!',
+          });
+          setTimeout(() => setBlockedNotification(null), 3500);
+        } else {
+          setBlockedNotification({
+            title: '⚠️ Window Switch Intercepted',
+            message: 'Focus Lock is strictly active! Stay on FocusMate to maintain your streak.',
+          });
+          setTimeout(() => setBlockedNotification(null), 4000);
+        }
       }
     };
 
@@ -244,6 +269,20 @@ export const FocusMoodOverlay = () => {
 
         {/* Ambient Noise & Exit Controls */}
         <div className="flex items-center gap-3">
+          {/* Topic Notes & Materials Button */}
+          <button
+            onClick={() => setIsNotesDrawerOpen(!isNotesDrawerOpen)}
+            className={`px-3.5 py-1.5 rounded-2xl border text-xs font-bold transition-all flex items-center gap-1.5 ${
+              isNotesDrawerOpen
+                ? 'bg-coral text-white border-coral shadow-soft-peach'
+                : 'bg-white/10 hover:bg-white/20 text-white border-white/15'
+            }`}
+            title="Open topic notes, drive links, and study materials"
+          >
+            <BookOpen className="w-3.5 h-3.5 text-coral" />
+            <span>Notes & Materials</span>
+          </button>
+
           <div className="hidden sm:flex items-center gap-2 bg-white/10 backdrop-blur-md px-3 py-1.5 rounded-2xl border border-white/10 text-xs">
             <button
               onClick={() => (isPlayingAudio ? stopAudio() : startAudio(soundType))}
@@ -325,6 +364,15 @@ export const FocusMoodOverlay = () => {
             ⚠️ {distractionAttempts} distraction attempts shielded
           </span>
         )}
+
+        {/* Quick link to open notes & materials */}
+        <button
+          onClick={() => setIsNotesDrawerOpen(true)}
+          className="mt-4 text-xs font-semibold text-white/70 hover:text-white transition-all flex items-center gap-1.5 bg-white/10 hover:bg-white/20 px-4 py-2 rounded-2xl border border-white/15"
+        >
+          <BookOpen className="w-3.5 h-3.5 text-coral" />
+          <span>Access Topic Notes, Drive Links & Diagrams</span>
+        </button>
       </div>
 
       {/* Bottom Distraction Shield Bar */}
@@ -385,6 +433,17 @@ export const FocusMoodOverlay = () => {
           setCelebration({ isOpen: false, minutes: 25, taskTitle: '' });
           stopFullFocusMode();
         }}
+      />
+
+      {/* Topic Study Notes & Materials Drawer in Focus Mode */}
+      <FocusNotesDrawer
+        isOpen={isNotesDrawerOpen}
+        onClose={() => setIsNotesDrawerOpen(false)}
+        initialTopicId={focusSessionConfig.topicId}
+        subjectId={focusSessionConfig.subjectId}
+        subjectName={focusSessionConfig.subjectName || focusSessionConfig.taskTitle}
+        timeFormatted={timeFormatted}
+        onOpenStudyResource={handleOpenStudyResource}
       />
     </div>
   );
