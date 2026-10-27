@@ -28,3 +28,7 @@ logs/
 .Trashes
 ehthumbs.db
 Thumbs.db
+
+# User Uploaded Static Assets
+server/public/uploads/*
+!server/public/uploads/.gitkeep

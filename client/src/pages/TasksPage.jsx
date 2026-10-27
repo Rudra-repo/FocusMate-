@@ -229,7 +229,19 @@ export const TasksPage = () => {
                     {isCompleted && <CheckCircle className="w-4 h-4" />}
                   </button>
 
-                  <div className="min-w-0">
+                  <div
+                    className="min-w-0 flex-1 cursor-pointer group"
+                    onClick={() => {
+                      navigate('/subjects', {
+                        state: {
+                          selectedSubjectId: task.subjectId?._id || task.subjectId,
+                          targetTopicName: task.title,
+                          openTopicModal: true,
+                        },
+                      });
+                    }}
+                    title="Click to view syllabus topics & study plan"
+                  >
                     <div className="flex items-center gap-2 flex-wrap">
                       <span
                         className="px-2 py-0.5 rounded-full text-[10px] font-bold text-white"
@@ -240,6 +252,9 @@ export const TasksPage = () => {
                       <span className="text-[11px] font-semibold text-mainText-muted capitalize px-2 py-0.5 rounded-full bg-peach-50 border border-peach-200">
                         {task.taskType}
                       </span>
+                      <span className="text-[10px] font-bold text-coral group-hover:underline flex items-center gap-0.5">
+                        → Syllabus & Plan
+                      </span>
                       {overdue && (
                         <span className="text-[10px] font-bold text-red-600 bg-red-100 px-2 py-0.5 rounded-full flex items-center gap-1">
                           <AlertCircle className="w-3 h-3" />
@@ -249,7 +264,7 @@ export const TasksPage = () => {
                     </div>
 
                     <h4
-                      className={`text-sm md:text-base font-bold text-mainText mt-1 ${
+                      className={`text-sm md:text-base font-bold text-mainText mt-1 group-hover:text-coral transition-colors ${
                         isCompleted ? 'line-through text-mainText-muted' : ''
                       }`}
                     >

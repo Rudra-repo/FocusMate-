@@ -42,8 +42,14 @@ export const PomodoroCard = ({ subjects = [] }) => {
   }, [isBreakActive, mode]);
 
   const adjustMinutes = (delta) => {
-    if (mode === 'break') return;
-    const nextMin = Math.max(5, Math.min(120, targetMinutes + delta));
+    if (mode === 'break') {
+      if (isBreakActive) return;
+      const currentMins = Math.floor(breakSecondsLeft / 60);
+      const nextMin = Math.max(1, Math.min(60, currentMins + delta));
+      setBreakSecondsLeft(nextMin * 60);
+      return;
+    }
+    const nextMin = Math.max(5, Math.min(180, targetMinutes + delta));
     setTargetMinutes(nextMin);
   };
 
@@ -185,35 +191,29 @@ export const PomodoroCard = ({ subjects = [] }) => {
 
       {/* Stepper & Timer Display */}
       <div className="flex items-center justify-center gap-4 my-1">
-        {mode === 'focus' ? (
-          <>
-            <button
-              onClick={() => adjustMinutes(-5)}
-              disabled={targetMinutes <= 5}
-              className="w-7 h-7 rounded-full bg-white/70 hover:bg-white text-mainText flex items-center justify-center shadow-sm disabled:opacity-30 transition-all hover:scale-105 active:scale-95"
-              title="Decrease 5 minutes"
-            >
-              <Minus className="w-3.5 h-3.5 stroke-[3]" />
-            </button>
+        <button
+          onClick={() => adjustMinutes(-5)}
+          disabled={mode === 'break' ? isBreakActive || breakSecondsLeft <= 60 : targetMinutes <= 5}
+          className="w-7 h-7 rounded-full bg-white/70 hover:bg-white text-mainText flex items-center justify-center shadow-sm disabled:opacity-30 transition-all hover:scale-105 active:scale-95"
+          title="Decrease 5 minutes"
+        >
+          <Minus className="w-3.5 h-3.5 stroke-[3]" />
+        </button>
 
-            <span className="text-2xl md:text-3xl font-extrabold font-display tracking-tight text-mainText select-none min-w-[90px] text-center">
-              {targetMinutes.toString().padStart(2, '0')}:00
-            </span>
+        <span className={`text-2xl md:text-3xl font-extrabold font-display tracking-tight select-none min-w-[90px] text-center ${
+          mode === 'break' ? 'text-successGreen-dark' : 'text-mainText'
+        }`}>
+          {mode === 'focus' ? `${targetMinutes.toString().padStart(2, '0')}:00` : formatSeconds(breakSecondsLeft)}
+        </span>
 
-            <button
-              onClick={() => adjustMinutes(5)}
-              disabled={targetMinutes >= 120}
-              className="w-7 h-7 rounded-full bg-white/70 hover:bg-white text-mainText flex items-center justify-center shadow-sm disabled:opacity-30 transition-all hover:scale-105 active:scale-95"
-              title="Increase 5 minutes"
-            >
-              <Plus className="w-3.5 h-3.5 stroke-[3]" />
-            </button>
-          </>
-        ) : (
-          <span className="text-2xl md:text-3xl font-extrabold font-display tracking-tight text-successGreen-dark select-none min-w-[90px] text-center">
-            {formatSeconds(breakSecondsLeft)}
-          </span>
-        )}
+        <button
+          onClick={() => adjustMinutes(5)}
+          disabled={mode === 'break' ? isBreakActive || breakSecondsLeft >= 3600 : targetMinutes >= 180}
+          className="w-7 h-7 rounded-full bg-white/70 hover:bg-white text-mainText flex items-center justify-center shadow-sm disabled:opacity-30 transition-all hover:scale-105 active:scale-95"
+          title="Increase 5 minutes"
+        >
+          <Plus className="w-3.5 h-3.5 stroke-[3]" />
+        </button>
       </div>
 
       {/* Start Button */}

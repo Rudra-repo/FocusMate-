@@ -56,6 +56,13 @@ export default {
         'glow-coral': '0 0 20px -3px rgba(255, 139, 118, 0.35)',
         'timer-glow': '0 12px 32px -4px rgba(255, 152, 86, 0.25)',
       },
+      zIndex: {
+        '60': '60',
+        '70': '70',
+        '80': '80',
+        '90': '90',
+        '100': '100',
+      },
       borderRadius: {
         '2xl': '1.25rem',
         '3xl': '1.75rem',

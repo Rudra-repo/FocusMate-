@@ -14,20 +14,27 @@ import {
   FileText,
   Lock,
 } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { TopicStudyMaterialsModal } from '../components/subjects/TopicStudyMaterialsModal';
+import { TopicStudyPlannerModal } from '../components/subjects/TopicStudyPlannerModal';
 import { AiQuizModal } from '../components/quizzes/AiQuizModal';
 
 export const SubjectsPage = () => {
   const { startFullFocusMode } = useAuth();
+  const location = useLocation();
+  const navState = location.state || {};
+
   const [subjects, setSubjects] = useState([]);
   const [selectedSubject, setSelectedSubject] = useState(null);
   const [topics, setTopics] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isAddSubjectOpen, setIsAddSubjectOpen] = useState(false);
   const [isAddTopicOpen, setIsAddTopicOpen] = useState(false);
+
+  // Topic planner modal (shows recommendation, custom duration, enter focus mode)
+  const [selectedTopicForPlanner, setSelectedTopicForPlanner] = useState(null);
 
   // Topic materials modal state
   const [selectedTopicForModal, setSelectedTopicForModal] = useState(null);
@@ -61,8 +68,12 @@ export const SubjectsPage = () => {
       const res = await api.get('/subjects');
       if (res.data.success) {
         setSubjects(res.data.subjects);
-        if (res.data.subjects.length > 0 && !selectedSubject) {
-          handleSelectSubject(res.data.subjects[0]);
+        if (res.data.subjects.length > 0) {
+          const targetSub = navState.selectedSubjectId
+            ? res.data.subjects.find((s) => s._id === navState.selectedSubjectId)
+            : null;
+          const initialSub = targetSub || res.data.subjects[0];
+          handleSelectSubject(initialSub);
         }
       }
     } catch (err) {
@@ -81,7 +92,20 @@ export const SubjectsPage = () => {
     try {
       const res = await api.get(`/subjects/${sub._id}`);
       if (res.data.success) {
-        setTopics(res.data.topics || []);
+        const loadedTopics = res.data.topics || [];
+        setTopics(loadedTopics);
+
+        // If navigated with openTopicModal or targetTopicName, auto open planner modal
+        if (navState.openTopicModal && loadedTopics.length > 0) {
+          const matched = navState.targetTopicName
+            ? loadedTopics.find(
+                (t) =>
+                  t.name.toLowerCase().includes(navState.targetTopicName.toLowerCase()) ||
+                  navState.targetTopicName.toLowerCase().includes(t.name.toLowerCase())
+              )
+            : null;
+          setSelectedTopicForPlanner(matched || loadedTopics[0]);
+        }
       }
     } catch (err) {
       console.error('Failed to load topics for subject:', err);
@@ -289,7 +313,7 @@ export const SubjectsPage = () => {
                       key={t._id}
                       className="p-4 rounded-2xl bg-peach-50/40 border border-peach-200/70 hover:bg-peach-50/80 transition-all flex flex-col md:flex-row md:items-center justify-between gap-3 group"
                     >
-                      <div className="flex-1 cursor-pointer" onClick={() => setSelectedTopicForModal(t)}>
+                      <div className="flex-1 cursor-pointer" onClick={() => setSelectedTopicForPlanner(t)}>
                         <div className="flex items-center gap-2 flex-wrap">
                           <h5 className="text-sm font-bold text-mainText group-hover:text-coral transition-colors">
                             {t.name}
@@ -343,25 +367,15 @@ export const SubjectsPage = () => {
                           <span>Materials</span>
                         </button>
 
-                        {/* Direct Focus Mode */}
+                        {/* Direct Focus Mode / Study Plan */}
                         <button
                           type="button"
-                          onClick={() => {
-                            startFullFocusMode({
-                              targetMinutes: 25,
-                              topicId: t._id,
-                              topicName: t.name,
-                              subjectId: selectedSubject._id,
-                              subjectName: selectedSubject.name,
-                              notes: t.notes,
-                              resources: t.resources,
-                            });
-                          }}
+                          onClick={() => setSelectedTopicForPlanner(t)}
                           className="px-2.5 py-1.5 rounded-xl bg-coral/10 hover:bg-coral text-coral hover:text-white border border-coral/30 text-xs font-bold transition-all flex items-center gap-1"
-                          title="Start 25m Focus Block with these topic notes"
+                          title="View Topic Study Plan & Set Focus Time"
                         >
                           <Lock className="w-3.5 h-3.5" />
-                          <span>Focus</span>
+                          <span>Plan & Focus</span>
                         </button>
 
                         {/* AI Quiz Button */}
@@ -559,6 +573,24 @@ export const SubjectsPage = () => {
           </div>
         </div>
       )}
+
+      {/* Topic Study Planner Modal (shows recommendation, custom duration, enter focus mode) */}
+      <TopicStudyPlannerModal
+        isOpen={!!selectedTopicForPlanner}
+        onClose={() => setSelectedTopicForPlanner(null)}
+        topic={selectedTopicForPlanner}
+        subject={selectedSubject}
+        onOpenMaterials={(top) => {
+          setSelectedTopicForPlanner(null);
+          setSelectedTopicForModal(top);
+        }}
+        onOpenAiQuiz={(topName, subId) => {
+          setSelectedTopicForPlanner(null);
+          setAiQuizTopic(topName);
+          setAiQuizSubjectId(subId);
+          setIsAiQuizOpen(true);
+        }}
+      />
 
       {/* Topic Study Materials & Notes Modal */}
       <TopicStudyMaterialsModal

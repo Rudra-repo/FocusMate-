@@ -16,6 +16,8 @@ import {
   Coffee,
   Bell,
   ArrowRight,
+  Minus,
+  Plus,
 } from 'lucide-react';
 import { FlowerCelebrationModal } from '../components/layout/FlowerCelebrationModal';
 import { useAuth } from '../context/AuthContext';
@@ -118,6 +120,19 @@ export const FocusRoomPage = () => {
     setTargetMinutes(minutes);
     setSecondsRemaining(minutes * 60);
     setSessionStartTime(null);
+  };
+
+  const handleSetCustomMinutes = (mins) => {
+    if (isActive) return;
+    const val = Math.max(1, Math.min(180, Number(mins) || 1));
+    setTargetMinutes(val);
+    setSecondsRemaining(val * 60);
+    setSessionStartTime(null);
+  };
+
+  const handleAdjustMinutes = (delta) => {
+    if (isActive) return;
+    handleSetCustomMinutes(targetMinutes + delta);
   };
 
   const handleStart = () => {
@@ -290,7 +305,7 @@ export const FocusRoomPage = () => {
               mode === 'focus' ? 'bg-coral text-white shadow-soft-peach' : 'text-mainText-muted hover:text-mainText'
             }`}
           >
-            Focus (25m)
+            Focus
           </button>
           <button
             onClick={() => switchMode('short_break', 5)}
@@ -298,7 +313,7 @@ export const FocusRoomPage = () => {
               mode === 'short_break' ? 'bg-successGreen text-white shadow-sm' : 'text-mainText-muted hover:text-mainText'
             }`}
           >
-            Short Break (5m)
+            Short Break
           </button>
           <button
             onClick={() => switchMode('long_break', 15)}
@@ -306,8 +321,68 @@ export const FocusRoomPage = () => {
               mode === 'long_break' ? 'bg-amber-500 text-white shadow-sm' : 'text-mainText-muted hover:text-mainText'
             }`}
           >
-            Long Break (15m)
+            Long Break
           </button>
+        </div>
+
+        {/* Custom Timer Duration & Presets */}
+        <div className="flex items-center gap-2.5 bg-white/80 p-1.5 px-3 rounded-2xl border border-peach-200 shadow-sm flex-wrap">
+          <span className="text-[11px] font-bold text-mainText-muted uppercase tracking-wider">
+            Time:
+          </span>
+
+          <div className="flex items-center gap-1">
+            {(mode === 'focus' ? [15, 25, 35, 45, 60, 90] : [3, 5, 10, 15, 20]).map((preset) => (
+              <button
+                key={preset}
+                type="button"
+                disabled={isActive}
+                onClick={() => handleSetCustomMinutes(preset)}
+                className={`px-2.5 py-1 rounded-xl text-xs font-bold transition-all ${
+                  targetMinutes === preset
+                    ? 'bg-coral text-white shadow-2xs'
+                    : 'bg-white hover:bg-peach-50 text-mainText border border-peach-200/80'
+                }`}
+              >
+                {preset}m
+              </button>
+            ))}
+          </div>
+
+          <div className="flex items-center gap-1 pl-2 border-l border-peach-200">
+            <button
+              type="button"
+              disabled={isActive || targetMinutes <= 1}
+              onClick={() => handleAdjustMinutes(-5)}
+              className="w-6 h-6 rounded-lg bg-peach-50 hover:bg-peach-100 text-mainText flex items-center justify-center text-xs font-bold disabled:opacity-40"
+              title="Minus 5 mins"
+            >
+              <Minus className="w-3 h-3" />
+            </button>
+
+            <div className="flex items-center gap-1">
+              <input
+                type="number"
+                min="1"
+                max="180"
+                disabled={isActive}
+                value={targetMinutes}
+                onChange={(e) => handleSetCustomMinutes(e.target.value)}
+                className="w-11 text-center text-xs font-bold py-1 px-0.5 rounded-lg border border-peach-200 bg-white focus:outline-none focus:border-coral"
+              />
+              <span className="text-xs font-semibold text-mainText-muted">m</span>
+            </div>
+
+            <button
+              type="button"
+              disabled={isActive || targetMinutes >= 180}
+              onClick={() => handleAdjustMinutes(5)}
+              className="w-6 h-6 rounded-lg bg-peach-50 hover:bg-peach-100 text-mainText flex items-center justify-center text-xs font-bold disabled:opacity-40"
+              title="Add 5 mins"
+            >
+              <Plus className="w-3 h-3" />
+            </button>
+          </div>
         </div>
 
         {/* Ambient Sound & Fullscreen controls */}

@@ -1,8 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Clock, Send, Check, Plus, ChevronDown, Mic, MicOff, Sparkles } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { Clock, Send, Check, Plus, ChevronDown, Mic, MicOff, Sparkles, BookOpen } from 'lucide-react';
 import api from '../../services/api';
 
 export const TodaysTasksCard = ({ tasks = [], subjects = [], onTasksUpdated }) => {
+  const navigate = useNavigate();
   const [newTitle, setNewTitle] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('Work');
   const [selectedTime, setSelectedTime] = useState('02:00 PM');
@@ -178,9 +180,21 @@ export const TodaysTasksCard = ({ tasks = [], subjects = [], onTasksUpdated }) =
                       {isCompleted && <Check className="w-3.5 h-3.5 stroke-[3]" />}
                     </button>
 
-                    <div className="flex flex-col truncate">
+                    <div
+                      className="flex flex-col truncate cursor-pointer group-hover:translate-x-0.5 transition-transform"
+                      onClick={() => {
+                        navigate('/subjects', {
+                          state: {
+                            selectedSubjectId: task.subjectId?._id || task.subjectId || null,
+                            targetTopicName: task.title,
+                            openTopicModal: true,
+                          },
+                        });
+                      }}
+                      title="Click to view syllabus topics & study recommendations for this task"
+                    >
                       <span
-                        className={`text-sm font-bold text-mainText truncate ${
+                        className={`text-sm font-bold text-mainText truncate hover:text-coral transition-colors ${
                           isCompleted ? 'line-through text-mainText-muted' : ''
                         }`}
                       >
@@ -191,8 +205,9 @@ export const TodaysTasksCard = ({ tasks = [], subjects = [], onTasksUpdated }) =
                           className="w-1.5 h-1.5 rounded-full"
                           style={{ backgroundColor: dotColor }}
                         />
-                        <span className="text-[11px] font-semibold text-mainText-muted capitalize">
-                          {subjectName}
+                        <span className="text-[11px] font-semibold text-mainText-muted capitalize flex items-center gap-1">
+                          <span>{subjectName}</span>
+                          <span className="text-coral text-[10px] font-bold">→ View Syllabus</span>
                         </span>
                       </div>
                     </div>
