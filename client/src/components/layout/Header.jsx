@@ -81,17 +81,19 @@ export const Header = ({ title = 'Overview', onToggleMobileMenu }) => {
 
       {/* Action Controls */}
       <div className="flex items-center gap-2 sm:gap-4 md:gap-6">
-        {/* Focus Mood Pill Toggle */}
+        {/* Focus Mode Pill Toggle */}
         <div
           onClick={toggleFocusMood}
-          className={`cursor-pointer flex items-center gap-1.5 sm:gap-2.5 px-2.5 sm:px-3.5 py-1.5 rounded-full border transition-all select-none ${
+          className={`cursor-pointer flex items-center gap-2 sm:gap-2.5 px-3 sm:px-3.5 py-1.5 rounded-full border transition-all select-none ${
             focusMood
               ? 'bg-[#EAFBF2] border-successGreen text-successGreen-dark shadow-sm'
               : 'bg-[#FFF7F2] border-[#FFD1BB] text-mainText-muted hover:border-coral'
           }`}
           title="Toggle Full Focus Mode & Distraction Shield"
         >
-          <span className="hidden xs:inline text-xs sm:text-sm font-semibold tracking-wide">Focus Mode</span>
+          <span className="text-xs sm:text-sm font-semibold tracking-wide whitespace-nowrap">
+            Focus Mode
+          </span>
           <div
             className={`w-8 sm:w-9 h-4 sm:h-5 rounded-full flex items-center p-0.5 transition-colors ${
               focusMood ? 'bg-successGreen justify-end' : 'bg-gray-300 justify-start'
