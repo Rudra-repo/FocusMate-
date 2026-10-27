@@ -66,8 +66,8 @@ export const AiPlannerModal = ({ isOpen, onClose }) => {
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-[#342D2B]/40 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
-      <div className="bg-white rounded-3xl p-6 md:p-8 max-w-3xl w-full shadow-2xl border-2 border-peach-200 my-8 animate-in zoom-in-95 duration-200 text-left">
+    <div className="fixed inset-0 z-50 bg-[#342D2B]/40 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
+      <div className="bg-white rounded-3xl p-4 sm:p-6 md:p-8 max-w-3xl w-full max-h-[92vh] overflow-y-auto shadow-2xl border-2 border-peach-200 my-auto animate-in zoom-in-95 duration-200 text-left">
         {/* Modal Header */}
         <div className="flex items-start justify-between pb-4 border-b border-peach-100">
           <div className="flex items-center gap-3">
@@ -106,7 +106,7 @@ export const AiPlannerModal = ({ isOpen, onClose }) => {
         )}
 
         {/* Navigation Tabs */}
-        <div className="flex items-center gap-2 mb-5">
+        <div className="flex items-center gap-1.5 sm:gap-2 mb-5 overflow-x-auto pb-1">
           <button
             onClick={() => setActiveTab('today')}
             className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${

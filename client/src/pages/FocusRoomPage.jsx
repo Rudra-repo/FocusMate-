@@ -296,12 +296,12 @@ export const FocusRoomPage = () => {
   return (
     <div className={`space-y-6 pb-12 ${isFullscreen ? 'fixed inset-0 z-50 bg-[#FFF0E8] p-8 overflow-y-auto' : ''}`}>
       {/* Top Controller Bar */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+      <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 sm:gap-4 flex-wrap">
         {/* Mode Selector Tabs */}
-        <div className="flex items-center gap-2 bg-white/80 p-1.5 rounded-2xl border border-peach-200 shadow-sm">
+        <div className="flex items-center gap-1.5 sm:gap-2 bg-white/80 p-1.5 rounded-2xl border border-peach-200 shadow-sm overflow-x-auto">
           <button
             onClick={() => switchMode('focus', 25)}
-            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${
+            className={`px-3 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap ${
               mode === 'focus' ? 'bg-coral text-white shadow-soft-peach' : 'text-mainText-muted hover:text-mainText'
             }`}
           >
@@ -309,7 +309,7 @@ export const FocusRoomPage = () => {
           </button>
           <button
             onClick={() => switchMode('short_break', 5)}
-            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${
+            className={`px-3 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap ${
               mode === 'short_break' ? 'bg-successGreen text-white shadow-sm' : 'text-mainText-muted hover:text-mainText'
             }`}
           >
@@ -317,7 +317,7 @@ export const FocusRoomPage = () => {
           </button>
           <button
             onClick={() => switchMode('long_break', 15)}
-            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${
+            className={`px-3 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap ${
               mode === 'long_break' ? 'bg-amber-500 text-white shadow-sm' : 'text-mainText-muted hover:text-mainText'
             }`}
           >
@@ -326,19 +326,19 @@ export const FocusRoomPage = () => {
         </div>
 
         {/* Custom Timer Duration & Presets */}
-        <div className="flex items-center gap-2.5 bg-white/80 p-1.5 px-3 rounded-2xl border border-peach-200 shadow-sm flex-wrap">
+        <div className="flex items-center gap-2 bg-white/80 p-1.5 px-2.5 sm:px-3 rounded-2xl border border-peach-200 shadow-sm flex-wrap max-w-full">
           <span className="text-[11px] font-bold text-mainText-muted uppercase tracking-wider">
             Time:
           </span>
 
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-1 overflow-x-auto py-0.5">
             {(mode === 'focus' ? [15, 25, 35, 45, 60, 90] : [3, 5, 10, 15, 20]).map((preset) => (
               <button
                 key={preset}
                 type="button"
                 disabled={isActive}
                 onClick={() => handleSetCustomMinutes(preset)}
-                className={`px-2.5 py-1 rounded-xl text-xs font-bold transition-all ${
+                className={`px-2 sm:px-2.5 py-1 rounded-xl text-xs font-bold transition-all whitespace-nowrap ${
                   targetMinutes === preset
                     ? 'bg-coral text-white shadow-2xs'
                     : 'bg-white hover:bg-peach-50 text-mainText border border-peach-200/80'
@@ -349,7 +349,7 @@ export const FocusRoomPage = () => {
             ))}
           </div>
 
-          <div className="flex items-center gap-1 pl-2 border-l border-peach-200">
+          <div className="flex items-center gap-1 pl-1.5 sm:pl-2 border-l border-peach-200">
             <button
               type="button"
               disabled={isActive || targetMinutes <= 1}
@@ -386,13 +386,13 @@ export const FocusRoomPage = () => {
         </div>
 
         {/* Ambient Sound & Fullscreen controls */}
-        <div className="flex items-center gap-3">
-          <div className="flex items-center gap-1.5 bg-white/80 px-3 py-1.5 rounded-2xl border border-peach-200 text-xs font-semibold">
+        <div className="flex items-center gap-2.5 sm:gap-3 flex-wrap">
+          <div className="flex items-center gap-1.5 bg-white/80 px-2.5 sm:px-3 py-1.5 rounded-2xl border border-peach-200 text-xs font-semibold">
             {ambientSound === 'none' ? <VolumeX className="w-4 h-4 text-mainText-muted" /> : <Volume2 className="w-4 h-4 text-coral" />}
             <select
               value={ambientSound}
               onChange={(e) => setAmbientSound(e.target.value)}
-              className="bg-transparent text-mainText focus:outline-none cursor-pointer"
+              className="bg-transparent text-mainText focus:outline-none cursor-pointer text-xs"
             >
               <option value="none">Mute Sound</option>
               <option value="rain">Rainfall Sound</option>
@@ -411,16 +411,16 @@ export const FocusRoomPage = () => {
       </div>
 
       {/* Main Focus Centerpiece */}
-      <div className="bg-white/95 rounded-4xl p-8 md:p-12 shadow-soft-card border border-[#FFE2D3]/70 flex flex-col items-center justify-center text-center relative overflow-hidden">
+      <div className="bg-white/95 rounded-4xl p-5 sm:p-8 md:p-12 shadow-soft-card border border-[#FFE2D3]/70 flex flex-col items-center justify-center text-center relative overflow-hidden">
         {mode !== 'focus' && (
-          <div className="flex items-center gap-2 bg-successGreen/15 border border-successGreen/30 text-successGreen-dark px-4 py-2 rounded-full text-xs font-bold mb-4 animate-in fade-in">
+          <div className="flex items-center gap-2 bg-successGreen/15 border border-successGreen/30 text-successGreen-dark px-3 sm:px-4 py-2 rounded-full text-xs font-bold mb-4 animate-in fade-in">
             <Coffee className="w-4 h-4 text-successGreen-dark" />
             <span>☕ Relaxing Break — Timer running smoothly on screen. (No full screen lockdown)</span>
           </div>
         )}
 
         {/* Active Task / Subject Selection */}
-        <div className="flex items-center gap-3 flex-wrap justify-center mb-6">
+        <div className="flex items-center gap-2 sm:gap-3 flex-wrap justify-center mb-6 max-w-full">
           <select
             value={selectedSubjectId}
             onChange={(e) => setSelectedSubjectId(e.target.value)}
@@ -466,7 +466,7 @@ export const FocusRoomPage = () => {
         </div>
 
         {/* Large Progress Ring Timer */}
-        <div className="relative w-72 h-72 md:w-80 md:h-80 flex items-center justify-center my-4">
+        <div className="relative w-60 h-60 sm:w-72 sm:h-72 md:w-80 md:h-80 flex items-center justify-center my-4">
           <svg className="w-full h-full transform -rotate-90" viewBox="0 0 320 320">
             {/* Background circle */}
             <circle

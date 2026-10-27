@@ -88,8 +88,8 @@ export const TopicStudyPlannerModal = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-[#342D2B]/40 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto animate-in fade-in duration-200">
-      <div className="bg-white rounded-3xl p-6 md:p-8 max-w-lg w-full shadow-2xl border border-peach-200 my-8 animate-in zoom-in-95 duration-200 relative">
+    <div className="fixed inset-0 z-50 bg-[#342D2B]/40 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 overflow-y-auto animate-in fade-in duration-200">
+      <div className="bg-white rounded-3xl p-5 sm:p-6 md:p-8 max-w-lg w-full max-h-[92vh] overflow-y-auto shadow-2xl border border-peach-200 my-auto animate-in zoom-in-95 duration-200 relative">
         {/* Header */}
         <div className="flex items-start justify-between pb-4 border-b border-peach-100">
           <div>

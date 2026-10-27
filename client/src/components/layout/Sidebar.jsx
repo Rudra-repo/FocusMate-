@@ -35,7 +35,7 @@ export const Sidebar = () => {
   };
 
   return (
-    <aside className="w-20 md:w-24 bg-gradient-to-b from-[#FF9856] via-[#FF8B76] to-[#FF7B60] text-white flex flex-col items-center py-6 px-2 rounded-3xl shadow-xl z-20 transition-all select-none">
+    <aside className="hidden md:flex w-20 md:w-24 bg-gradient-to-b from-[#FF9856] via-[#FF8B76] to-[#FF7B60] text-white flex-col items-center py-6 px-2 rounded-3xl shadow-xl z-20 transition-all select-none shrink-0 sticky top-6 self-start max-h-[calc(100vh-48px)]">
       {/* Brand Icon / Logo */}
       <div className="mb-8 flex flex-col items-center group cursor-pointer" onClick={() => navigate('/')}>
         <div className="w-12 h-12 rounded-2xl bg-white/20 backdrop-blur-md flex items-center justify-center shadow-inner group-hover:scale-105 transition-transform">

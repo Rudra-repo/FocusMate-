@@ -198,12 +198,12 @@ export const SettingsPage = () => {
         </div>
 
         {/* Action Button */}
-        <div className="flex items-center justify-between pt-2">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 pt-2">
           <button
             type="button"
             onClick={handleExportData}
             disabled={isExporting}
-            className="px-5 py-2.5 rounded-2xl bg-white border border-peach-300 text-mainText font-bold text-xs shadow-sm hover:border-coral flex items-center gap-2 transition-all"
+            className="px-5 py-2.5 rounded-2xl bg-white border border-peach-300 text-mainText font-bold text-xs shadow-sm hover:border-coral flex items-center justify-center gap-2 transition-all"
           >
             <Download className="w-4 h-4 text-coral" />
             <span>{isExporting ? 'Exporting...' : 'Export Academic Data (JSON)'}</span>
@@ -211,7 +211,7 @@ export const SettingsPage = () => {
 
           <button
             type="submit"
-            className="px-6 py-2.5 rounded-2xl bg-coral hover:bg-coral-dark text-white font-bold text-xs md:text-sm shadow-soft-peach flex items-center gap-2 transition-all hover:scale-105 active:scale-95"
+            className="px-6 py-2.5 rounded-2xl bg-coral hover:bg-coral-dark text-white font-bold text-xs md:text-sm shadow-soft-peach flex items-center justify-center gap-2 transition-all hover:scale-105 active:scale-95"
           >
             <Save className="w-4 h-4" />
             <span>Save Preferences</span>

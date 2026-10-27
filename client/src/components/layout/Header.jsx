@@ -1,10 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Bell, Sparkles, Check, Flame, AlertCircle, Clock, Calendar, X, ArrowRight } from 'lucide-react';
+import { Bell, Sparkles, Check, Flame, AlertCircle, Clock, Calendar, X, ArrowRight, Menu } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import api from '../../services/api';
 
-export const Header = ({ title = 'Overview' }) => {
+export const Header = ({ title = 'Overview', onToggleMobileMenu }) => {
   const { user, focusMood, toggleFocusMood } = useAuth();
   const [showNotifications, setShowNotifications] = useState(false);
   const [alerts, setAlerts] = useState([]);
@@ -62,33 +62,42 @@ export const Header = ({ title = 'Overview' }) => {
   }, [showNotifications]);
 
   return (
-    <header className="relative z-30 bg-white/95 backdrop-blur-md rounded-2xl px-6 py-3.5 shadow-soft-card flex items-center justify-between border border-[#FFE2D3]/60 mb-6 transition-all">
-      {/* Title */}
-      <div>
-        <h1 className="text-xl md:text-2xl font-bold font-display text-mainText tracking-tight">
+    <header className="relative z-30 bg-white/95 backdrop-blur-md rounded-2xl px-4 sm:px-6 py-3 shadow-soft-card flex items-center justify-between border border-[#FFE2D3]/60 mb-4 sm:mb-6 transition-all">
+      {/* Title & Mobile Menu Hamburger */}
+      <div className="flex items-center gap-3">
+        {onToggleMobileMenu && (
+          <button
+            onClick={onToggleMobileMenu}
+            className="md:hidden w-9 h-9 rounded-xl bg-peach-50 text-mainText hover:text-coral flex items-center justify-center border border-peach-200"
+            title="Open Menu"
+          >
+            <Menu className="w-5 h-5" />
+          </button>
+        )}
+        <h1 className="text-lg sm:text-xl md:text-2xl font-bold font-display text-mainText tracking-tight truncate max-w-[140px] sm:max-w-none">
           {title}
         </h1>
       </div>
 
       {/* Action Controls */}
-      <div className="flex items-center gap-4 md:gap-6">
+      <div className="flex items-center gap-2 sm:gap-4 md:gap-6">
         {/* Focus Mood Pill Toggle */}
         <div
           onClick={toggleFocusMood}
-          className={`cursor-pointer flex items-center gap-2.5 px-3.5 py-1.5 rounded-full border transition-all select-none ${
+          className={`cursor-pointer flex items-center gap-1.5 sm:gap-2.5 px-2.5 sm:px-3.5 py-1.5 rounded-full border transition-all select-none ${
             focusMood
               ? 'bg-[#EAFBF2] border-successGreen text-successGreen-dark shadow-sm'
               : 'bg-[#FFF7F2] border-[#FFD1BB] text-mainText-muted hover:border-coral'
           }`}
           title="Toggle Full Focus Mode & Distraction Shield"
         >
-          <span className="text-xs md:text-sm font-semibold tracking-wide">Focus Mood</span>
+          <span className="hidden xs:inline text-xs sm:text-sm font-semibold tracking-wide">Focus Mode</span>
           <div
-            className={`w-9 h-5 rounded-full flex items-center p-0.5 transition-colors ${
+            className={`w-8 sm:w-9 h-4 sm:h-5 rounded-full flex items-center p-0.5 transition-colors ${
               focusMood ? 'bg-successGreen justify-end' : 'bg-gray-300 justify-start'
             }`}
           >
-            <div className="w-4 h-4 rounded-full bg-white shadow-sm transition-transform" />
+            <div className="w-3 sm:w-4 h-3 sm:h-4 rounded-full bg-white shadow-sm transition-transform" />
           </div>
         </div>
 
@@ -104,7 +113,7 @@ export const Header = ({ title = 'Overview' }) => {
         <div className="relative" ref={dropdownRef}>
           <button
             onClick={() => setShowNotifications(!showNotifications)}
-            className="w-10 h-10 rounded-full bg-[#FFF5EE] border border-[#FFE2D3] flex items-center justify-center text-mainText-muted hover:text-coral hover:border-coral transition-colors relative"
+            className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-[#FFF5EE] border border-[#FFE2D3] flex items-center justify-center text-mainText-muted hover:text-coral hover:border-coral transition-colors relative"
             title="Notifications & Exam Alerts"
           >
             <Bell className="w-4 h-4" />
@@ -119,9 +128,9 @@ export const Header = ({ title = 'Overview' }) => {
             />
           )}
 
-          {/* Fully opaque notification modal with clean borders and z-50 */}
+          {/* Fully opaque notification modal with clean borders and responsive width */}
           {showNotifications && (
-            <div className="absolute right-0 mt-3 w-80 sm:w-96 bg-white rounded-3xl shadow-2xl border-2 border-peach-200 p-5 z-50 animate-in fade-in zoom-in-95 duration-150 text-left">
+            <div className="absolute right-0 mt-3 w-[calc(100vw-32px)] sm:w-96 max-w-sm bg-white rounded-3xl shadow-2xl border-2 border-peach-200 p-4 sm:p-5 z-50 animate-in fade-in zoom-in-95 duration-150 text-left">
               <div className="flex items-center justify-between pb-3 border-b border-peach-100">
                 <div className="flex items-center gap-2">
                   <span className="text-sm font-bold text-mainText">Alerts & Deadlines</span>

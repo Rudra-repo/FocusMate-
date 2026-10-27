@@ -47,3 +47,18 @@
 .banner-gradient-bg {
   background: linear-gradient(135deg, #FFE3D1 0%, #FFD6C4 50%, #FFC1A6 100%);
 }
+
+@supports (padding: max(0px)) {
+  .safe-area-bottom {
+    padding-bottom: max(0.5rem, env(safe-area-inset-bottom));
+  }
+}
+
+/* Hide scrollbar for clean horizontal tab rows on mobile */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}

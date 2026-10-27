@@ -66,7 +66,7 @@ export const ExamAlertsBanner = ({ onOpenAiPlanner }) => {
           </div>
 
           {/* Right Side Action Buttons */}
-          <div className="flex items-center gap-3 shrink-0 pt-2 lg:pt-0 border-t lg:border-t-0 border-peach-200">
+          <div className="flex items-center gap-2.5 sm:gap-3 shrink-0 pt-2 lg:pt-0 border-t lg:border-t-0 border-peach-200 flex-wrap">
             <button
               onClick={onOpenAiPlanner}
               className="px-4 py-2.5 rounded-2xl bg-white border-2 border-coral text-coral-dark hover:bg-peach-50 font-extrabold text-xs shadow-sm flex items-center gap-2 transition-all hover:scale-105 active:scale-95"

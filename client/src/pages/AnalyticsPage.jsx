@@ -81,9 +81,9 @@ export const AnalyticsPage = () => {
       </div>
 
       {/* Top 4 Stat Cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         {/* Total Focus Hours */}
-        <div className="bg-white/95 rounded-3xl p-5 shadow-soft-card border border-[#FFE2D3]/60">
+        <div className="bg-white/95 rounded-3xl p-4 sm:p-5 shadow-soft-card border border-[#FFE2D3]/60">
           <div className="flex items-center justify-between">
             <span className="text-xs font-bold text-mainText-muted">Total Focus Hours</span>
             <div className="w-8 h-8 rounded-xl bg-peach-100 text-coral flex items-center justify-center">

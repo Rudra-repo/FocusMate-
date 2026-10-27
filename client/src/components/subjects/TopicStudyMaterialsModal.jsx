@@ -273,12 +273,12 @@ export const TopicStudyMaterialsModal = ({
 
   return (
     <>
-      <div className="fixed inset-0 z-50 bg-[#342D2B]/40 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto animate-in fade-in duration-200">
-        <div className="bg-white rounded-3xl p-6 md:p-8 max-w-3xl w-full shadow-2xl border border-peach-200 my-8 animate-in zoom-in-95 duration-200 flex flex-col max-h-[90vh]">
+      <div className="fixed inset-0 z-50 bg-[#342D2B]/40 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 overflow-y-auto animate-in fade-in duration-200">
+        <div className="bg-white rounded-3xl p-4 sm:p-6 md:p-8 max-w-3xl w-full shadow-2xl border border-peach-200 my-auto animate-in zoom-in-95 duration-200 flex flex-col max-h-[92vh]">
           {/* Header Bar */}
-          <div className="flex items-start justify-between pb-4 border-b border-peach-100 shrink-0">
+          <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3 pb-4 border-b border-peach-100 shrink-0">
             <div>
-              <div className="flex items-center gap-2 mb-1">
+              <div className="flex items-center gap-2 mb-1 flex-wrap">
                 <span
                   className="px-2.5 py-0.5 rounded-full text-[10px] font-bold text-white shadow-sm"
                   style={{ backgroundColor: subject?.color || '#FF8B76' }}
@@ -289,15 +289,15 @@ export const TopicStudyMaterialsModal = ({
                   Topic Hub
                 </span>
               </div>
-              <h3 className="text-xl md:text-2xl font-bold font-display text-mainText">
+              <h3 className="text-lg sm:text-xl md:text-2xl font-bold font-display text-mainText">
                 {topic.name}
               </h3>
             </div>
 
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-wrap">
               <button
                 onClick={handleStartTopicFocus}
-                className="px-3.5 py-2 rounded-2xl bg-coral hover:bg-coral-dark text-white font-bold text-xs shadow-soft-peach flex items-center gap-1.5 transition-all hover:scale-105 active:scale-95"
+                className="px-3 sm:px-3.5 py-2 rounded-2xl bg-coral hover:bg-coral-dark text-white font-bold text-xs shadow-soft-peach flex items-center gap-1.5 transition-all hover:scale-105 active:scale-95"
                 title="Launch distraction-free Pomodoro session with this topic's notes preloaded"
               >
                 <Lock className="w-3.5 h-3.5" />
@@ -309,7 +309,7 @@ export const TopicStudyMaterialsModal = ({
                   onClose();
                   if (onOpenAiQuiz) onOpenAiQuiz(topic.name, subject?._id);
                 }}
-                className="px-3.5 py-2 rounded-2xl bg-peach-100 hover:bg-peach-200 text-coral font-bold text-xs flex items-center gap-1.5 transition-colors"
+                className="px-3 sm:px-3.5 py-2 rounded-2xl bg-peach-100 hover:bg-peach-200 text-coral font-bold text-xs flex items-center gap-1.5 transition-colors"
                 title="Generate AI diagnostic quiz for this topic"
               >
                 <Sparkles className="w-3.5 h-3.5 fill-coral" />
@@ -318,7 +318,7 @@ export const TopicStudyMaterialsModal = ({
 
               <button
                 onClick={onClose}
-                className="w-8 h-8 rounded-full bg-peach-50 text-mainText-muted hover:text-coral flex items-center justify-center transition-colors ml-1"
+                className="w-8 h-8 rounded-full bg-peach-50 text-mainText-muted hover:text-coral flex items-center justify-center transition-colors ml-1 shrink-0"
               >
                 <X className="w-4 h-4" />
               </button>

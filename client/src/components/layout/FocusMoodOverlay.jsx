@@ -638,10 +638,10 @@ export const FocusMoodOverlay = () => {
         </div>
 
         {/* Center: UNIFIED IN-SCREEN VIEW SWITCHER TABS */}
-        <div className="flex items-center gap-1 bg-white/5 p-1 rounded-2xl border border-white/10 shadow-inner">
+        <div className="flex items-center gap-1 bg-white/5 p-1 rounded-2xl border border-white/10 shadow-inner overflow-x-auto max-w-full order-3 sm:order-2 w-full sm:w-auto justify-around sm:justify-start">
           <button
             onClick={() => setViewMode('timer')}
-            className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
+            className={`px-2.5 sm:px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1 sm:gap-1.5 whitespace-nowrap ${
               viewMode === 'timer'
                 ? 'bg-coral text-white shadow-soft-peach'
                 : 'text-white/70 hover:text-white hover:bg-white/10'
@@ -653,7 +653,7 @@ export const FocusMoodOverlay = () => {
 
           <button
             onClick={() => setViewMode('notes')}
-            className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
+            className={`px-2.5 sm:px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1 sm:gap-1.5 whitespace-nowrap ${
               viewMode === 'notes'
                 ? 'bg-coral text-white shadow-soft-peach'
                 : 'text-white/70 hover:text-white hover:bg-white/10'
@@ -665,7 +665,7 @@ export const FocusMoodOverlay = () => {
 
           <button
             onClick={() => setViewMode('materials')}
-            className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
+            className={`px-2.5 sm:px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1 sm:gap-1.5 whitespace-nowrap ${
               viewMode === 'materials'
                 ? 'bg-coral text-white shadow-soft-peach'
                 : 'text-white/70 hover:text-white hover:bg-white/10'
@@ -677,14 +677,14 @@ export const FocusMoodOverlay = () => {
 
           <button
             onClick={() => setViewMode('quiz')}
-            className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
+            className={`px-2.5 sm:px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1 sm:gap-1.5 whitespace-nowrap ${
               viewMode === 'quiz'
                 ? 'bg-coral text-white shadow-soft-peach'
                 : 'text-white/70 hover:text-white hover:bg-white/10'
             }`}
           >
             <Sparkles className="w-3.5 h-3.5" />
-            <span>In-Focus Quiz</span>
+            <span>Quiz</span>
           </button>
         </div>
 

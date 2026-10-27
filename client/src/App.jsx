@@ -1,8 +1,9 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { Sidebar } from './components/layout/Sidebar';
 import { Header } from './components/layout/Header';
+import { MobileNav } from './components/layout/MobileNav';
 import { FocusMoodOverlay } from './components/layout/FocusMoodOverlay';
 
 // Pages
@@ -19,6 +20,7 @@ import RegisterPage from './pages/RegisterPage';
 
 const ProtectedLayout = () => {
   const { isAuthenticated, loading } = useAuth();
+  const [isMobileDrawerOpen, setIsMobileDrawerOpen] = useState(false);
   const location = useLocation();
 
   if (loading) {
@@ -45,13 +47,16 @@ const ProtectedLayout = () => {
   else if (path === '/settings') pageTitle = 'Settings & Profile';
 
   return (
-    <div className="min-h-screen bg-peach-100 flex p-3 md:p-6 gap-4 md:gap-6 max-w-[1700px] mx-auto">
-      {/* Floating Rounded Coral/Orange Sidebar matching reference */}
+    <div className="min-h-screen bg-peach-100 flex p-2.5 sm:p-4 md:p-6 gap-4 md:gap-6 max-w-[1700px] mx-auto pb-20 md:pb-6">
+      {/* Floating Rounded Coral/Orange Sidebar (Desktop / Tablet) */}
       <Sidebar />
 
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col min-w-0">
-        <Header title={pageTitle} />
+        <Header
+          title={pageTitle}
+          onToggleMobileMenu={() => setIsMobileDrawerOpen(!isMobileDrawerOpen)}
+        />
         <main className="flex-1">
           <Routes>
             <Route path="/" element={<DashboardPage />} />
@@ -66,6 +71,12 @@ const ProtectedLayout = () => {
           </Routes>
         </main>
       </div>
+
+      {/* Mobile Bottom Bar & Slide-Over Drawer Navigation */}
+      <MobileNav
+        isDrawerOpen={isMobileDrawerOpen}
+        onCloseDrawer={() => setIsMobileDrawerOpen(false)}
+      />
 
       {/* Zen Focus Mood Overlay */}
       <FocusMoodOverlay />
