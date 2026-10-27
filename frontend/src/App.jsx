@@ -47,17 +47,17 @@ const ProtectedLayout = () => {
   else if (path === '/settings') pageTitle = 'Settings & Profile';
 
   return (
-    <div className="min-h-screen bg-peach-100 flex p-2.5 sm:p-4 md:p-6 gap-4 md:gap-6 max-w-[1700px] mx-auto pb-20 md:pb-6">
+    <div className="min-h-screen bg-peach-100 flex p-2.5 sm:p-4 md:p-6 gap-4 md:gap-6 max-w-[1700px] mx-auto pb-20 md:pb-6 overflow-x-hidden">
       {/* Floating Rounded Coral/Orange Sidebar (Desktop / Tablet) */}
       <Sidebar />
 
       {/* Main Content Area */}
-      <div className="flex-1 flex flex-col min-w-0">
+      <div className="flex-1 flex flex-col min-w-0 max-w-full">
         <Header
           title={pageTitle}
           onToggleMobileMenu={() => setIsMobileDrawerOpen(!isMobileDrawerOpen)}
         />
-        <main className="flex-1">
+        <main className="flex-1 min-w-0 max-w-full">
           <Routes>
             <Route path="/" element={<DashboardPage />} />
             <Route path="/plan" element={<PlanPage />} />

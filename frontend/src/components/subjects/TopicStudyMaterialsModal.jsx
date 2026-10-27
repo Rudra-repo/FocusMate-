@@ -273,31 +273,31 @@ export const TopicStudyMaterialsModal = ({
 
   return (
     <>
-      <div className="fixed inset-0 z-50 bg-[#342D2B]/40 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 overflow-y-auto animate-in fade-in duration-200">
-        <div className="bg-white rounded-3xl p-4 sm:p-6 md:p-8 max-w-3xl w-full shadow-2xl border border-peach-200 my-auto animate-in zoom-in-95 duration-200 flex flex-col max-h-[92vh]">
+      <div className="fixed inset-0 z-50 bg-[#342D2B]/40 backdrop-blur-sm flex items-center justify-center p-2.5 sm:p-4 overflow-y-auto animate-in fade-in duration-200">
+        <div className="bg-white rounded-3xl p-3.5 sm:p-6 md:p-8 max-w-3xl w-full shadow-2xl border border-peach-200 my-auto animate-in zoom-in-95 duration-200 flex flex-col max-h-[94vh] overflow-hidden">
           {/* Header Bar */}
-          <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3 pb-4 border-b border-peach-100 shrink-0">
-            <div>
+          <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3 pb-3 sm:pb-4 border-b border-peach-100 shrink-0 w-full min-w-0">
+            <div className="min-w-0 flex-1">
               <div className="flex items-center gap-2 mb-1 flex-wrap">
                 <span
-                  className="px-2.5 py-0.5 rounded-full text-[10px] font-bold text-white shadow-sm"
+                  className="px-2.5 py-0.5 rounded-full text-[10px] font-bold text-white shadow-sm shrink-0"
                   style={{ backgroundColor: subject?.color || '#FF8B76' }}
                 >
                   {subject?.name || 'Subject'}
                 </span>
-                <span className="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-full bg-peach-100 text-coral">
+                <span className="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-full bg-peach-100 text-coral shrink-0">
                   Topic Hub
                 </span>
               </div>
-              <h3 className="text-lg sm:text-xl md:text-2xl font-bold font-display text-mainText">
+              <h3 className="text-base sm:text-xl md:text-2xl font-bold font-display text-mainText truncate">
                 {topic.name}
               </h3>
             </div>
 
-            <div className="flex items-center gap-2 flex-wrap">
+            <div className="flex items-center gap-2 flex-wrap shrink-0">
               <button
                 onClick={handleStartTopicFocus}
-                className="px-3 sm:px-3.5 py-2 rounded-2xl bg-coral hover:bg-coral-dark text-white font-bold text-xs shadow-soft-peach flex items-center gap-1.5 transition-all hover:scale-105 active:scale-95"
+                className="px-3 sm:px-3.5 py-1.5 sm:py-2 rounded-2xl bg-coral hover:bg-coral-dark text-white font-bold text-xs shadow-soft-peach flex items-center gap-1.5 transition-all hover:scale-105 active:scale-95"
                 title="Launch distraction-free Pomodoro session with this topic's notes preloaded"
               >
                 <Lock className="w-3.5 h-3.5" />
@@ -309,7 +309,7 @@ export const TopicStudyMaterialsModal = ({
                   onClose();
                   if (onOpenAiQuiz) onOpenAiQuiz(topic.name, subject?._id);
                 }}
-                className="px-3 sm:px-3.5 py-2 rounded-2xl bg-peach-100 hover:bg-peach-200 text-coral font-bold text-xs flex items-center gap-1.5 transition-colors"
+                className="px-3 sm:px-3.5 py-1.5 sm:py-2 rounded-2xl bg-peach-100 hover:bg-peach-200 text-coral font-bold text-xs flex items-center gap-1.5 transition-colors"
                 title="Generate AI diagnostic quiz for this topic"
               >
                 <Sparkles className="w-3.5 h-3.5 fill-coral" />
@@ -326,51 +326,51 @@ export const TopicStudyMaterialsModal = ({
           </div>
 
           {/* Navigation Tabs */}
-          <div className="flex items-center gap-2 mt-4 pb-3 border-b border-peach-100 shrink-0">
+          <div className="flex items-center gap-2 mt-3 sm:mt-4 pb-2.5 sm:pb-3 border-b border-peach-100 shrink-0 overflow-x-auto no-scrollbar w-full min-w-0">
             <button
               onClick={() => setActiveTab('notes')}
-              className={`px-4 py-2 rounded-2xl text-xs font-bold transition-all flex items-center gap-1.5 ${
+              className={`px-3.5 sm:px-4 py-1.5 sm:py-2 rounded-2xl text-xs font-bold transition-all flex items-center gap-1.5 shrink-0 whitespace-nowrap ${
                 activeTab === 'notes'
                   ? 'bg-coral text-white shadow-soft-peach'
                   : 'bg-peach-50/60 hover:bg-peach-100 text-mainText-muted'
               }`}
             >
               <FileText className="w-3.5 h-3.5" />
-              <span>Study Notes & Formulas</span>
+              <span>Notes & Formulas</span>
             </button>
 
             <button
               onClick={() => setActiveTab('materials')}
-              className={`px-4 py-2 rounded-2xl text-xs font-bold transition-all flex items-center gap-1.5 ${
+              className={`px-3.5 sm:px-4 py-1.5 sm:py-2 rounded-2xl text-xs font-bold transition-all flex items-center gap-1.5 shrink-0 whitespace-nowrap ${
                 activeTab === 'materials'
                   ? 'bg-coral text-white shadow-soft-peach'
                   : 'bg-peach-50/60 hover:bg-peach-100 text-mainText-muted'
               }`}
             >
               <Folder className="w-3.5 h-3.5" />
-              <span>Drive Links, PDFs & Photos ({resources.length})</span>
+              <span>Materials ({resources.length})</span>
             </button>
           </div>
 
           {/* Tab Content Body (Scrollable) */}
-          <div className="flex-1 overflow-y-auto py-4 pr-1">
+          <div className="flex-1 overflow-y-auto py-3 sm:py-4 pr-1">
             {/* TAB 1: NOTES */}
             {activeTab === 'notes' && (
               <div className="space-y-4">
-                <div className="flex items-center justify-between">
+                <div className="flex items-center justify-between gap-2 flex-wrap">
                   <span className="text-xs font-bold text-mainText">
                     Personal Topic Notes & Cheat Sheet
                   </span>
                   <div className="flex items-center gap-2">
                     {notesSaveSuccess && (
                       <span className="text-xs font-bold text-successGreen-dark flex items-center gap-1 animate-in fade-in">
-                        <Check className="w-3.5 h-3.5" /> Notes Saved
+                        <Check className="w-3.5 h-3.5" /> Saved
                       </span>
                     )}
                     <button
                       onClick={handleSaveNotes}
                       disabled={isSavingNotes}
-                      className="px-4 py-1.5 rounded-xl bg-coral hover:bg-coral-dark text-white text-xs font-bold shadow-sm flex items-center gap-1.5 transition-all hover:scale-105 active:scale-95 disabled:opacity-50"
+                      className="px-3.5 sm:px-4 py-1.5 rounded-xl bg-coral hover:bg-coral-dark text-white text-xs font-bold shadow-sm flex items-center gap-1.5 transition-all hover:scale-105 active:scale-95 disabled:opacity-50"
                     >
                       <Save className="w-3.5 h-3.5" />
                       <span>{isSavingNotes ? 'Saving...' : 'Save Notes'}</span>
@@ -378,9 +378,9 @@ export const TopicStudyMaterialsModal = ({
                   </div>
                 </div>
 
-                <div className="bg-peach-50/40 p-3 rounded-2xl border border-peach-200/80">
+                <div className="bg-peach-50/40 p-2.5 sm:p-3 rounded-2xl border border-peach-200/80">
                   <textarea
-                    rows="12"
+                    rows="10"
                     placeholder="Write key equations, formulas, algorithmic steps, mnemonics, or revision points here... These notes will be readily accessible inside Focus Mode while the timer is running!"
                     value={notesText}
                     onChange={(e) => setNotesText(e.target.value)}
@@ -399,11 +399,11 @@ export const TopicStudyMaterialsModal = ({
 
             {/* TAB 2: STUDY MATERIALS (DRIVE, PDF, PHOTOS, LINKS) */}
             {activeTab === 'materials' && (
-              <div className="space-y-6">
+              <div className="space-y-4 sm:space-y-6">
                 {/* Add Material Form with Local File Upload or URL */}
                 <form
                   onSubmit={handleAddOrUploadResource}
-                  className="bg-peach-50/50 p-4 rounded-2xl border border-peach-200 space-y-3.5"
+                  className="bg-peach-50/50 p-3.5 sm:p-4 rounded-2xl border border-peach-200 space-y-3.5"
                 >
                   <div className="flex items-center justify-between flex-wrap gap-2">
                     <span className="text-xs font-bold text-mainText block">
@@ -411,21 +411,21 @@ export const TopicStudyMaterialsModal = ({
                     </span>
 
                     {/* Mode Toggle: File Upload vs Link */}
-                    <div className="flex items-center gap-1 bg-white p-1 rounded-xl border border-peach-200">
+                    <div className="grid grid-cols-2 gap-1 bg-white p-1 rounded-xl border border-peach-200 w-full sm:w-auto">
                       <button
                         type="button"
                         onClick={() => {
                           setAttachMode('file');
                           setUploadError('');
                         }}
-                        className={`px-3 py-1 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 ${
+                        className={`px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
                           attachMode === 'file'
                             ? 'bg-coral text-white shadow-2xs'
                             : 'text-mainText-muted hover:text-mainText'
                         }`}
                       >
                         <Upload className="w-3.5 h-3.5" />
-                        <span>Upload File (PDF / Image)</span>
+                        <span className="truncate">File (PDF/Photo)</span>
                       </button>
 
                       <button
@@ -434,14 +434,14 @@ export const TopicStudyMaterialsModal = ({
                           setAttachMode('link');
                           setUploadError('');
                         }}
-                        className={`px-3 py-1 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 ${
+                        className={`px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
                           attachMode === 'link'
                             ? 'bg-coral text-white shadow-2xs'
                             : 'text-mainText-muted hover:text-mainText'
                         }`}
                       >
                         <Link2 className="w-3.5 h-3.5" />
-                        <span>Google Drive / Web Link</span>
+                        <span className="truncate">Drive / Link</span>
                       </button>
                     </div>
                   </div>
@@ -619,38 +619,38 @@ export const TopicStudyMaterialsModal = ({
                       return (
                         <div
                           key={index}
-                          className="p-3.5 rounded-2xl bg-white border border-peach-200/80 hover:border-coral/50 shadow-sm transition-all flex items-center justify-between gap-3 group"
+                          className="p-3 sm:p-3.5 rounded-2xl bg-white border border-peach-200/80 hover:border-coral/50 shadow-sm transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 sm:gap-3 group w-full min-w-0"
                         >
-                          <div className="flex items-center gap-3 overflow-hidden">
+                          <div className="flex items-center gap-2.5 sm:gap-3 min-w-0 flex-1 w-full overflow-hidden">
                             {getResourceIcon(res.resourceType)}
 
-                            <div className="overflow-hidden">
+                            <div className="min-w-0 flex-1 overflow-hidden">
                               <h5 className="text-xs md:text-sm font-bold text-mainText truncate">
                                 {res.title}
                               </h5>
-                              <span className="text-[11px] text-mainText-muted truncate block max-w-xs sm:max-w-md">
+                              <span className="text-[11px] text-mainText-muted truncate block max-w-full">
                                 {res.url}
                               </span>
                             </div>
                           </div>
 
-                          <div className="flex items-center gap-2 shrink-0">
+                          <div className="flex items-center justify-between sm:justify-end gap-2 w-full sm:w-auto pt-2 sm:pt-0 border-t sm:border-t-0 border-peach-100 shrink-0">
                             {/* In-Screen Reader Button */}
                             <button
                               type="button"
                               onClick={() => setViewerResource(res)}
-                              className="px-3 py-1.5 rounded-xl bg-coral/10 hover:bg-coral text-coral hover:text-white text-xs font-bold transition-all flex items-center gap-1.5"
+                              className="flex-1 sm:flex-none justify-center px-3 py-1.5 rounded-xl bg-coral/10 hover:bg-coral text-coral hover:text-white text-xs font-bold transition-all flex items-center gap-1.5"
                               title="Read directly on screen without leaving FocusMate"
                             >
                               <Eye className="w-3.5 h-3.5" />
-                              <span>View on Screen</span>
+                              <span className="whitespace-nowrap">View on Screen</span>
                             </button>
 
                             <a
                               href={res.url}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="p-1.5 rounded-xl bg-peach-50 text-mainText-muted hover:text-coral transition-colors"
+                              className="p-1.5 rounded-xl bg-peach-50 text-mainText-muted hover:text-coral transition-colors shrink-0"
                               title="Open in new tab"
                             >
                               <ExternalLink className="w-4 h-4" />

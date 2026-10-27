@@ -194,9 +194,9 @@ export const SubjectsPage = () => {
   };
 
   return (
-    <div className="space-y-6 pb-12">
+    <div className="space-y-4 sm:space-y-6 pb-12 w-full min-w-0 max-w-full">
       {/* Top Header */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 w-full min-w-0">
         <div>
           <h2 className="text-xl md:text-2xl font-bold font-display text-mainText">
             Subjects & Topic Mastery
@@ -208,7 +208,7 @@ export const SubjectsPage = () => {
 
         <button
           onClick={() => setIsAddSubjectOpen(true)}
-          className="px-5 py-2.5 rounded-2xl bg-coral hover:bg-coral-dark text-white font-bold text-xs md:text-sm shadow-soft-peach flex items-center gap-2 transition-all hover:scale-105 active:scale-95"
+          className="px-4 sm:px-5 py-2.5 rounded-2xl bg-coral hover:bg-coral-dark text-white font-bold text-xs md:text-sm shadow-soft-peach flex items-center justify-center gap-2 transition-all hover:scale-105 active:scale-95 shrink-0 self-start sm:self-auto"
         >
           <Plus className="w-4 h-4 stroke-[3]" />
           <span>Add Subject</span>
@@ -216,9 +216,9 @@ export const SubjectsPage = () => {
       </div>
 
       {/* Main Grid: Subjects List on Left, Topic Detail on Right */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 md:gap-6 w-full min-w-0 max-w-full">
         {/* Left Column (5 cols): Subjects Cards */}
-        <div className="lg:col-span-4 space-y-3">
+        <div className="lg:col-span-4 space-y-3 w-full min-w-0">
           <span className="text-xs font-bold text-mainText-muted uppercase tracking-wider block px-1">
             Enrolled Subjects ({subjects.length})
           </span>
@@ -232,25 +232,25 @@ export const SubjectsPage = () => {
                 <div
                   key={sub._id}
                   onClick={() => handleSelectSubject(sub)}
-                  className={`p-4 rounded-3xl cursor-pointer border transition-all ${
+                  className={`p-3.5 sm:p-4 rounded-3xl cursor-pointer border transition-all w-full min-w-0 max-w-full overflow-hidden ${
                     isSelected
                       ? 'bg-white shadow-soft-card border-coral ring-2 ring-coral/20'
                       : 'bg-white/80 hover:bg-white border-[#FFE2D3]/60 hover:shadow-sm'
                   }`}
                 >
-                  <div className="flex items-start justify-between">
-                    <div className="flex items-center gap-2.5">
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="flex items-center gap-2.5 min-w-0 flex-1">
                       <div
-                        className="w-4 h-4 rounded-full"
+                        className="w-4 h-4 rounded-full shrink-0"
                         style={{ backgroundColor: sub.color || '#FF8B76' }}
                       />
-                      <div>
-                        <h4 className="text-sm font-bold text-mainText">{sub.name}</h4>
+                      <div className="min-w-0 flex-1">
+                        <h4 className="text-sm font-bold text-mainText truncate">{sub.name}</h4>
                         <span className="text-[11px] text-mainText-muted">{sub.code || 'General'}</span>
                       </div>
                     </div>
                     <ChevronRight
-                      className={`w-4 h-4 transition-transform ${
+                      className={`w-4 h-4 shrink-0 transition-transform ${
                         isSelected ? 'text-coral translate-x-0.5' : 'text-mainText-muted'
                       }`}
                     />
@@ -288,25 +288,25 @@ export const SubjectsPage = () => {
         </div>
 
         {/* Right Column (8 cols): Active Subject Topics & Notes */}
-        <div className="lg:col-span-8">
+        <div className="lg:col-span-8 w-full min-w-0">
           {selectedSubject ? (
-            <div className="bg-white/95 rounded-3xl p-6 shadow-soft-card border border-[#FFE2D3]/60 space-y-6">
+            <div className="bg-white/95 rounded-3xl p-3.5 sm:p-6 shadow-soft-card border border-[#FFE2D3]/60 space-y-4 sm:space-y-6 w-full min-w-0 max-w-full overflow-hidden">
               {/* Subject Banner */}
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-peach-100">
-                <div>
-                  <div className="flex items-center gap-2">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-peach-100 w-full min-w-0">
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-2 flex-wrap">
                     <span
-                      className="px-2.5 py-0.5 rounded-full text-xs font-bold text-white shadow-sm"
+                      className="px-2.5 py-0.5 rounded-full text-xs font-bold text-white shadow-sm shrink-0"
                       style={{ backgroundColor: selectedSubject.color }}
                     >
                       {selectedSubject.code || 'Course'}
                     </span>
-                    <h3 className="text-xl font-bold font-display text-mainText">
+                    <h3 className="text-lg sm:text-xl font-bold font-display text-mainText truncate">
                       {selectedSubject.name}
                     </h3>
                   </div>
                   {selectedSubject.description && (
-                    <p className="text-xs text-mainText-muted mt-1">
+                    <p className="text-xs text-mainText-muted mt-1 break-words">
                       {selectedSubject.description}
                     </p>
                   )}
@@ -322,7 +322,7 @@ export const SubjectsPage = () => {
               </div>
 
               {/* Topics Breakdown */}
-              <div className="space-y-3">
+              <div className="space-y-3 w-full min-w-0">
                 <div className="flex items-center justify-between">
                   <h4 className="text-sm font-bold text-mainText">Syllabus Topics & Retention</h4>
                   <span className="text-xs text-mainText-muted">{topics.length} recorded</span>
@@ -336,11 +336,11 @@ export const SubjectsPage = () => {
                   topics.map((t) => (
                     <div
                       key={t._id}
-                      className="p-4 rounded-2xl bg-peach-50/40 border border-peach-200/70 hover:bg-peach-50/80 transition-all flex flex-col md:flex-row md:items-center justify-between gap-3 group"
+                      className="p-3.5 sm:p-4 rounded-2xl bg-peach-50/40 border border-peach-200/70 hover:bg-peach-50/80 transition-all flex flex-col md:flex-row md:items-center justify-between gap-3 group w-full min-w-0 max-w-full overflow-hidden"
                     >
-                      <div className="flex-1 cursor-pointer" onClick={() => setSelectedTopicForPlanner(t)}>
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <h5 className="text-sm font-bold text-mainText group-hover:text-coral transition-colors">
+                      <div className="flex-1 min-w-0 w-full cursor-pointer" onClick={() => setSelectedTopicForPlanner(t)}>
+                        <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
+                          <h5 className="text-sm font-bold text-mainText group-hover:text-coral transition-colors break-words">
                             {t.name}
                           </h5>
                           {getMasteryBadge(t.masteryLevel)}
@@ -352,7 +352,7 @@ export const SubjectsPage = () => {
                         </div>
 
                         {t.notes && (
-                          <p className="text-xs text-mainText-muted mt-1 line-clamp-1">
+                          <p className="text-xs text-mainText-muted mt-1 line-clamp-2 break-words">
                             {t.notes}
                           </p>
                         )}
@@ -380,12 +380,12 @@ export const SubjectsPage = () => {
                       </div>
 
                       {/* Action buttons */}
-                      <div className="flex items-center gap-1.5 shrink-0 flex-wrap">
+                      <div className="flex flex-wrap items-center gap-1.5 pt-2.5 md:pt-0 border-t md:border-t-0 border-peach-200/60 w-full md:w-auto">
                         {/* Open Notes & Materials Hub */}
                         <button
                           type="button"
                           onClick={() => setSelectedTopicForModal(t)}
-                          className="px-2.5 py-1.5 rounded-xl bg-white hover:bg-peach-100 text-mainText border border-peach-200 text-xs font-bold transition-all flex items-center gap-1 shadow-2xs"
+                          className="flex-1 sm:flex-none justify-center px-2.5 py-1.5 rounded-xl bg-white hover:bg-peach-100 text-mainText border border-peach-200 text-xs font-bold transition-all flex items-center gap-1 shadow-2xs"
                           title="Open Study Notes, Drive Links & Photos"
                         >
                           <Folder className="w-3.5 h-3.5 text-coral" />
@@ -396,11 +396,11 @@ export const SubjectsPage = () => {
                         <button
                           type="button"
                           onClick={() => setSelectedTopicForPlanner(t)}
-                          className="px-2.5 py-1.5 rounded-xl bg-coral/10 hover:bg-coral text-coral hover:text-white border border-coral/30 text-xs font-bold transition-all flex items-center gap-1"
+                          className="flex-1 sm:flex-none justify-center px-2.5 py-1.5 rounded-xl bg-coral/10 hover:bg-coral text-coral hover:text-white border border-coral/30 text-xs font-bold transition-all flex items-center gap-1"
                           title="View Topic Study Plan & Set Focus Time"
                         >
                           <Lock className="w-3.5 h-3.5" />
-                          <span>Plan & Focus</span>
+                          <span className="whitespace-nowrap">Plan & Focus</span>
                         </button>
 
                         {/* AI Quiz Button */}
@@ -411,7 +411,7 @@ export const SubjectsPage = () => {
                             setAiQuizSubjectId(selectedSubject._id);
                             setIsAiQuizOpen(true);
                           }}
-                          className="p-1.5 rounded-xl bg-peach-50 text-coral hover:bg-coral hover:text-white border border-peach-200 transition-colors"
+                          className="p-1.5 rounded-xl bg-peach-50 text-coral hover:bg-coral hover:text-white border border-peach-200 transition-colors shrink-0"
                           title="Generate AI Quiz on this topic"
                         >
                           <Sparkles className="w-3.5 h-3.5" />
@@ -421,7 +421,7 @@ export const SubjectsPage = () => {
                         <select
                           value={t.masteryLevel}
                           onChange={(e) => handleUpdateMastery(t._id, e.target.value)}
-                          className="text-xs font-semibold py-1 px-2 rounded-xl border border-peach-300 bg-white text-mainText focus:outline-none focus:border-coral"
+                          className="w-full sm:w-auto mt-1 sm:mt-0 text-xs font-semibold py-1 px-2 rounded-xl border border-peach-300 bg-white text-mainText focus:outline-none focus:border-coral"
                         >
                           <option value="not_started">Not Started</option>
                           <option value="learning">Learning</option>
@@ -435,7 +435,7 @@ export const SubjectsPage = () => {
               </div>
             </div>
           ) : (
-            <div className="bg-white/80 rounded-3xl p-12 text-center border border-peach-200">
+            <div className="bg-white/80 rounded-3xl p-8 sm:p-12 text-center border border-peach-200">
               <BookOpen className="w-12 h-12 text-peach-300 mx-auto mb-3" />
               <p className="text-sm font-bold text-mainText">Select a subject to view syllabus</p>
             </div>
@@ -445,11 +445,11 @@ export const SubjectsPage = () => {
 
       {/* Add Subject Modal */}
       {isAddSubjectOpen && (
-        <div className="fixed inset-0 z-50 bg-[#342D2B]/35 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl p-6 max-w-md w-full shadow-2xl border border-peach-200 animate-in zoom-in-95 duration-200">
+        <div className="fixed inset-0 z-50 bg-[#342D2B]/35 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
+          <div className="bg-white rounded-3xl p-4 sm:p-6 max-w-md w-full max-h-[92vh] overflow-y-auto shadow-2xl border border-peach-200 animate-in zoom-in-95 duration-200 my-auto">
             <div className="flex items-center justify-between pb-3 border-b border-peach-100 mb-4">
-              <h3 className="text-lg font-bold font-display text-mainText">Add New Course / Subject</h3>
-              <button onClick={() => setIsAddSubjectOpen(false)} className="w-8 h-8 rounded-full bg-peach-50 text-mainText-muted hover:text-coral flex items-center justify-center">
+              <h3 className="text-base sm:text-lg font-bold font-display text-mainText">Add New Course / Subject</h3>
+              <button onClick={() => setIsAddSubjectOpen(false)} className="w-8 h-8 rounded-full bg-peach-50 text-mainText-muted hover:text-coral flex items-center justify-center shrink-0">
                 <X className="w-4 h-4" />
               </button>
             </div>
@@ -463,11 +463,11 @@ export const SubjectsPage = () => {
                   placeholder="e.g. Operating Systems"
                   value={newSubject.name}
                   onChange={(e) => setNewSubject({ ...newSubject, name: e.target.value })}
-                  className="w-full text-xs px-3.5 py-2 rounded-xl border border-peach-200 focus:outline-none focus:border-coral"
+                  className="w-full text-xs px-3.5 py-2 rounded-xl border border-peach-200 focus:outline-none focus:border-coral bg-white"
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <label className="text-xs font-bold text-mainText block mb-1">Course Code</label>
                   <input
@@ -475,7 +475,7 @@ export const SubjectsPage = () => {
                     placeholder="e.g. CS-301"
                     value={newSubject.code}
                     onChange={(e) => setNewSubject({ ...newSubject, code: e.target.value })}
-                    className="w-full text-xs px-3.5 py-2 rounded-xl border border-peach-200 focus:outline-none focus:border-coral"
+                    className="w-full text-xs px-3.5 py-2 rounded-xl border border-peach-200 focus:outline-none focus:border-coral bg-white"
                   />
                 </div>
                 <div>
@@ -485,14 +485,14 @@ export const SubjectsPage = () => {
                     min="1"
                     value={newSubject.targetHours}
                     onChange={(e) => setNewSubject({ ...newSubject, targetHours: Number(e.target.value) })}
-                    className="w-full text-xs px-3.5 py-2 rounded-xl border border-peach-200 focus:outline-none focus:border-coral"
+                    className="w-full text-xs px-3.5 py-2 rounded-xl border border-peach-200 focus:outline-none focus:border-coral bg-white"
                   />
                 </div>
               </div>
 
               <div>
                 <label className="text-xs font-bold text-mainText block mb-1">Theme Color</label>
-                <div className="flex items-center gap-3">
+                <div className="flex flex-wrap items-center gap-2.5">
                   {['#FF8B76', '#FF9856', '#74C99A', '#E8725C', '#E6A817', '#9370DB'].map((color) => (
                     <button
                       type="button"
@@ -514,7 +514,7 @@ export const SubjectsPage = () => {
                   placeholder="Key concepts, professor notes or syllabus summary..."
                   value={newSubject.description}
                   onChange={(e) => setNewSubject({ ...newSubject, description: e.target.value })}
-                  className="w-full text-xs px-3.5 py-2 rounded-xl border border-peach-200 focus:outline-none focus:border-coral"
+                  className="w-full text-xs px-3.5 py-2 rounded-xl border border-peach-200 focus:outline-none focus:border-coral bg-white"
                 />
               </div>
 
@@ -529,11 +529,11 @@ export const SubjectsPage = () => {
 
       {/* Add Topic Modal */}
       {isAddTopicOpen && (
-        <div className="fixed inset-0 z-50 bg-[#342D2B]/35 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl p-6 max-w-md w-full shadow-2xl border border-peach-200 animate-in zoom-in-95 duration-200">
+        <div className="fixed inset-0 z-50 bg-[#342D2B]/35 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
+          <div className="bg-white rounded-3xl p-4 sm:p-6 max-w-md w-full max-h-[92vh] overflow-y-auto shadow-2xl border border-peach-200 animate-in zoom-in-95 duration-200 my-auto">
             <div className="flex items-center justify-between pb-3 border-b border-peach-100 mb-4">
-              <h3 className="text-lg font-bold font-display text-mainText">Add Topic to {selectedSubject?.name}</h3>
-              <button onClick={() => setIsAddTopicOpen(false)} className="w-8 h-8 rounded-full bg-peach-50 text-mainText-muted hover:text-coral flex items-center justify-center">
+              <h3 className="text-base sm:text-lg font-bold font-display text-mainText truncate pr-2">Add Topic to {selectedSubject?.name}</h3>
+              <button onClick={() => setIsAddTopicOpen(false)} className="w-8 h-8 rounded-full bg-peach-50 text-mainText-muted hover:text-coral flex items-center justify-center shrink-0">
                 <X className="w-4 h-4" />
               </button>
             </div>
@@ -547,17 +547,17 @@ export const SubjectsPage = () => {
                   placeholder="e.g. Virtual Memory & Paging"
                   value={newTopic.name}
                   onChange={(e) => setNewTopic({ ...newTopic, name: e.target.value })}
-                  className="w-full text-xs px-3.5 py-2 rounded-xl border border-peach-200 focus:outline-none focus:border-coral"
+                  className="w-full text-xs px-3.5 py-2 rounded-xl border border-peach-200 focus:outline-none focus:border-coral bg-white"
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <label className="text-xs font-bold text-mainText block mb-1">Initial Mastery</label>
                   <select
                     value={newTopic.masteryLevel}
                     onChange={(e) => setNewTopic({ ...newTopic, masteryLevel: e.target.value })}
-                    className="w-full text-xs px-3 py-2 rounded-xl border border-peach-200 focus:outline-none focus:border-coral"
+                    className="w-full text-xs px-3 py-2 rounded-xl border border-peach-200 focus:outline-none focus:border-coral bg-white"
                   >
                     <option value="not_started">Not Started</option>
                     <option value="learning">Learning</option>

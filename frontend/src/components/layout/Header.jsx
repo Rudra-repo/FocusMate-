@@ -62,44 +62,44 @@ export const Header = ({ title = 'Overview', onToggleMobileMenu }) => {
   }, [showNotifications]);
 
   return (
-    <header className="relative z-30 bg-white/95 backdrop-blur-md rounded-2xl px-4 sm:px-6 py-3 shadow-soft-card flex items-center justify-between border border-[#FFE2D3]/60 mb-4 sm:mb-6 transition-all">
+    <header className="relative z-30 bg-white/95 backdrop-blur-md rounded-2xl px-3 sm:px-6 py-2.5 sm:py-3 shadow-soft-card flex items-center justify-between border border-[#FFE2D3]/60 mb-4 sm:mb-6 transition-all min-w-0 max-w-full gap-2">
       {/* Title & Mobile Menu Hamburger */}
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
         {onToggleMobileMenu && (
           <button
             onClick={onToggleMobileMenu}
-            className="md:hidden w-9 h-9 rounded-xl bg-peach-50 text-mainText hover:text-coral flex items-center justify-center border border-peach-200"
+            className="md:hidden w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-peach-50 text-mainText hover:text-coral flex items-center justify-center border border-peach-200 shrink-0"
             title="Open Menu"
           >
-            <Menu className="w-5 h-5" />
+            <Menu className="w-4 h-4 sm:w-5 sm:h-5" />
           </button>
         )}
-        <h1 className="text-lg sm:text-xl md:text-2xl font-bold font-display text-mainText tracking-tight truncate max-w-[140px] sm:max-w-none">
+        <h1 className="text-sm sm:text-xl md:text-2xl font-bold font-display text-mainText tracking-tight truncate">
           {title}
         </h1>
       </div>
 
       {/* Action Controls */}
-      <div className="flex items-center gap-2 sm:gap-4 md:gap-6">
+      <div className="flex items-center gap-1.5 sm:gap-4 md:gap-6 shrink-0">
         {/* Focus Mode Pill Toggle */}
         <div
           onClick={toggleFocusMood}
-          className={`cursor-pointer flex items-center gap-2 sm:gap-2.5 px-3 sm:px-3.5 py-1.5 rounded-full border transition-all select-none ${
+          className={`cursor-pointer flex items-center gap-1.5 sm:gap-2.5 px-2.5 sm:px-3.5 py-1 sm:py-1.5 rounded-full border transition-all select-none shrink-0 ${
             focusMood
               ? 'bg-[#EAFBF2] border-successGreen text-successGreen-dark shadow-sm'
               : 'bg-[#FFF7F2] border-[#FFD1BB] text-mainText-muted hover:border-coral'
           }`}
           title="Toggle Full Focus Mode & Distraction Shield"
         >
-          <span className="text-xs sm:text-sm font-semibold tracking-wide whitespace-nowrap">
+          <span className="text-[11px] sm:text-sm font-semibold tracking-wide whitespace-nowrap">
             Focus Mode
           </span>
           <div
-            className={`w-8 sm:w-9 h-4 sm:h-5 rounded-full flex items-center p-0.5 transition-colors ${
+            className={`w-7 sm:w-9 h-3.5 sm:h-5 rounded-full flex items-center p-0.5 transition-colors ${
               focusMood ? 'bg-successGreen justify-end' : 'bg-gray-300 justify-start'
             }`}
           >
-            <div className="w-3 sm:w-4 h-3 sm:h-4 rounded-full bg-white shadow-sm transition-transform" />
+            <div className="w-2.5 sm:w-4 h-2.5 sm:h-4 rounded-full bg-white shadow-sm transition-transform" />
           </div>
         </div>
 

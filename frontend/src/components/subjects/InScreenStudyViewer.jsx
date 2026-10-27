@@ -28,7 +28,9 @@ export const InScreenStudyViewer = ({
 
     // For uploaded PDFs or relative URLs
     if (url.startsWith('/uploads/')) {
-      return `http://localhost:5001${url}`;
+      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5001/api/v1';
+      const backendBase = apiUrl.replace(/\/api\/v1\/?$/, '');
+      return `${backendBase}${url}`;
     }
 
     return url;
